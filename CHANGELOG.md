@@ -1,3 +1,50 @@
+# Changelog - v4.0.0 (November 2025)
+
+## BREAKING CHANGES
+
+**IMPORTANT**: Stamus Networks has removed the SELKS repository (https://github.com/StamusNetworks/SELKS.git). As a result, this project now exclusively supports **Clean NDR**.
+
+### Major Changes
+
+*   **SELKS Removal:** Removed all SELKS installation options from the installer. Only Clean NDR is now supported.
+*   **Single Mikrotik Support:** Official support is now limited to **one Mikrotik device**. Multiple Mikrotik devices can still be configured manually (documentation will be added in future updates).
+*   **Variable Rename:** Renamed `SELKS_CONTAINER_DATA_SURICATA_LOG` to `NDR_SURICATA_LOG_PATH` in `mikrocata.py`.
+*   **Updated Defaults:** Changed default log path from `/root/SELKS/docker/containers-data/suricata/logs/` to `/root/NDR/config/containers-data/suricata/logs/` (Clean NDR default).
+
+### New Features
+
+*   **Timezone Support:** Added `TIMEZONE_OFFSET` configuration option to display timestamps in local timezone instead of UTC in Telegram notifications and MikroTik comments.
+    - Configure your timezone offset in hours (e.g., `TIMEZONE_OFFSET = 3` for UTC+3, `-5` for UTC-5).
+    - Timestamps from Suricata logs (UTC) are now automatically converted to your local timezone.
+
+### Bug Fixes
+
+*   **Python 3.10+ SSL Compatibility:** Fixed SSL connection issues with Python 3.10 and newer versions. (thanks to LeoSaraArvore)
+    - Previously, SSL connections would fail with `ValueError: check_hostname requires server_hostname` on Python 3.10+.
+    - The `connect_to_tik()` function now explicitly passes `server_hostname` parameter to `ssl.wrap_socket()` using a lambda function.
+    - This fix ensures compatibility with both old and new Python versions.
+
+*   **Clean NDR Path Detection:** Resolved issue where Mikrocata would loop infinitely looking for eve.json in the wrong path. (thanks to LeoSaraArvore)
+    - Changed default path from SELKS (`/root/SELKS/docker/...`) to Clean NDR (`/root/NDR/config/...`).
+    - Renamed configuration variable from `SELKS_CONTAINER_DATA_SURICATA_LOG` to `NDR_SURICATA_LOG_PATH`.
+    - Installer now correctly updates the path during Clean NDR installation.
+    - Added helpful diagnostic messages after repeated failures to help users troubleshoot path issues.
+
+### Technical Improvements
+
+*   Simplified installer menu to only offer Clean NDR installation.
+*   Updated documentation to reflect SELKS deprecation and Clean NDR focus.
+*   Updated uninstaller to only support Clean NDR removal.
+*   Added timezone conversion for timestamps in alerts and notifications.
+
+### Migration Notes
+
+If you are currently using SELKS:
+- SELKS will continue to work if already installed, but new installations are not possible.
+- Consider migrating to Clean NDR for future updates and support installing on a new machine.
+
+---
+
 # Changelog - v3.0.2 (July 2025)
 
 ## Bug Fix

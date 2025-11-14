@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to Mikrocata2SELKS 👋</h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-3.0.2-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-4.0.0-blue.svg?cacheSeconds=2592000" />
   <a href="https://github.com/angolo40/mikrocata2selks" target="_blank">
     <img alt="License: MIT" src="https://img.shields.io/github/license/angolo40/Mikrocata2SELKS" />
   </a>
@@ -13,20 +13,15 @@
 
 Mikrocata2SELKS is a streamlined solution for integrating Mikrotik devices with a powerful Network Detection and Response (NDR) system for packet analysis.
 It automates the setup process and enables efficient network traffic monitoring and threat detection.
-The script now offers a choice between two powerful open-source solutions:
-- **SELKS**: The classic, trusted open-source IDS/IPS platform.
-- **Clean NDR**: The next evolution of SELKS, offering a modernized architecture.
+
+**IMPORTANT UPDATE**: Stamus Networks has removed the SELKS repository (https://github.com/StamusNetworks/SELKS.git). As a result, this project now exclusively supports **Clean NDR** (the evolution of SELKS). SELKS installation is no longer available.
 
 ```mermaid
 graph LR
-    A[Mikrotik Router] -->|TZSP Traffic| B[Mikrocata2SELKS]
-    B -->|Analysis| C{IDS/IPS Engine}
-    C -- SELKS --> D[Suricata on ELK]
-    C -- Clean NDR --> E[Suricata on OpenSearch]
-    D --> F[Telegram Notifications]
-    E --> F
-    D --> G[Firewall Rules]
-    E --> G
+    A[Mikrotik Router] -->|TZSP Traffic| B[Mikrocata]
+    B -->|Analysis| C[Clean NDR - Suricata on OpenSearch]
+    C --> D[Telegram Notifications]
+    C --> E[Firewall Rules]
 ```
 
 **Minimum Requirements:**
@@ -49,10 +44,10 @@ The installation process is now fully interactive!
 5. Navigate to the repository directory: `cd mikrocata2selks`.
 6. Run the interactive installer: `./easyinstall.sh`.
 7. Follow the on-screen menu:
-    - **Choose your NDR**: Select either SELKS or Clean NDR.
-    - **Configure**: The script will prompt you for necessary information, like the number of Mikrotik devices for a SELKS install.
+    - **Install Clean NDR**: The installer will set up Clean NDR with support for one Mikrotik device.
+    - **Configure**: The script will prompt you for necessary information, like the installation path.
     - **Wait...**: The script will handle the rest.
-8. Once finished, edit the configuration file for each Mikrotik device (e.g., `/usr/local/bin/mikrocataTZSP0.py`) with your Mikrotik and Telegram parameters, then reload the service (e.g., `systemctl restart mikrocataTZSP0.service`).
+8. Once finished, edit the configuration file (e.g., `/usr/local/bin/mikrocataTZSP0.py`) with your Mikrotik and Telegram parameters, then reload the service (e.g., `systemctl restart mikrocataTZSP0.service`).
 9. Configure your Mikrotik devices as described below.
 
 ## 📡 Mikrotik Setup
@@ -91,18 +86,63 @@ The installation process is now fully interactive!
     /user/add name=mikrocata2selks password=xxxxxxxxxxxxx group=full (change password)
     ```
 
-## 🛠️ Handling Multiple Mikrotik Devices (SELKS Installation)
+## ⚙️ Mikrocata Configuration
 
-When installing **SELKS**, the script will ask how many Mikrotik devices you want to manage. Based on your input, it will automatically create dedicated dummy interfaces and corresponding Mikrocata services for each device on the Debian machine.
+After installation, you need to configure the Mikrocata script with your specific settings. Edit the configuration file:
 
-- Example configuration:
-    - For Mikrotik0: Creates the `tzsp0` interface on port `37008` and the script `/usr/local/bin/mikrocataTZSP0.py`.
-    - For Mikrotik1: Creates the `tzsp1` interface on port `37009` and the script `/usr/local/bin/mikrocataTZSP1.py`.
-    - For Mikrotik2: Creates the `tzsp2` interface on port `37010` and the script `/usr/local/bin/mikrocataTZSP2.py`.
+```bash
+nano /usr/local/bin/mikrocataTZSP0.py
+```
 
-You will need to edit each script with the specific Mikrotik values and enable the sniffer on each Mikrotik device to send data to the corresponding port.
+### Essential Settings
 
-**Note**: The **Clean NDR** installation currently supports only a single Mikrotik device.
+1. **Mikrotik Connection:**
+   ```python
+   USERNAME = "mikrocata2selks"  # Mikrotik username
+   PASSWORD = "password"          # Mikrotik password
+   ROUTER_IP = "192.168.0.1"     # Mikrotik IP address
+   ```
+
+2. **Telegram Notifications (optional):**
+   ```python
+   enable_telegram = True
+   TELEGRAM_TOKEN = "your_bot_token"
+   TELEGRAM_CHATID = "your_chat_id"
+   ```
+
+3. **Timezone Configuration:**
+   ```python
+   # Set your timezone offset in hours from UTC
+   TIMEZONE_OFFSET = 3  # Example: 3 for UTC+3 (Moscow), -5 for UTC-5 (EST), 0 for UTC
+   ```
+
+   This setting ensures that timestamps in Telegram notifications and MikroTik comments display in your local timezone instead of UTC.
+
+   **Common timezones:**
+   - `0` - UTC
+   - `1` - CET (Central European Time)
+   - `3` - MSK (Moscow Standard Time)
+   - `-5` - EST (Eastern Standard Time)
+   - `-8` - PST (Pacific Standard Time)
+   - `8` - CST (China Standard Time)
+
+After editing the configuration, restart the service:
+```bash
+systemctl restart mikrocataTZSP0.service
+```
+
+## 🛠️ Handling Multiple Mikrotik Devices
+
+**Official Support**: The Clean NDR installation officially supports **one Mikrotik device**. The installer will automatically configure a single device setup.
+
+**Manual Multi-Device Configuration**: While SELKS previously supported multiple Mikrotik devices out of the box, it is still possible to configure multiple devices with Clean NDR, but this must be done **manually**. Documentation for manual multi-device setup will be integrated in future updates.
+
+For reference, a multi-device setup would involve:
+- Creating additional dummy interfaces (`tzsp1`, `tzsp2`, etc.) on different ports (`37009`, `37010`, etc.)
+- Creating corresponding Mikrocata service instances (`mikrocataTZSP1.py`, `mikrocataTZSP2.py`, etc.)
+- Configuring each Mikrotik device to send traffic to its dedicated port
+
+If you need to manage multiple Mikrotik devices, please wait for the official documentation or contact the maintainer for assistance.
 
 ```mermaid
 flowchart TD
@@ -112,7 +152,7 @@ flowchart TD
         M2[Mikrotik2 Port:37010]
     end
 
-    subgraph Debian_Server ["Debian Server (SELKS)"]
+    subgraph Debian_Server ["Debian Server (Clean NDR)"]
         subgraph Interfaces
             I0[Interface:tzsp0 Port:37008]
             I1[Interface:tzsp1 Port:37009]
@@ -154,11 +194,10 @@ flowchart TD
 
 - Installs Docker and Docker Compose.
 - Installs Python.
-- Interactive installer with a choice between:
-    - **SELKS**: The classic open-source IDS/IPS platform.
-    - **Clean NDR**: The next-generation open-source NDR platform.
+- Installs **Clean NDR**: The next-generation open-source NDR platform.
+  - **Note**: SELKS is no longer supported due to repository removal by Stamus Networks.
 - Downloads and installs Mikrocata.
-- Installs TZSP interface(s).
+- Installs TZSP interface for packet capture.
 - Enables notifications over Telegram when an IP is blocked.
 - Includes a complete uninstallation option.
 
@@ -185,10 +224,10 @@ flowchart TD
 
 
 ## 📝 Notes
-- Default account for SELKS:
+- Access Clean NDR web interface:
     - URL: `https://[YOURDEBIANIP]`
-    - Username: `selks-user`
-    - Password: `selks-user`
+    - Username: cleanndr
+	- Password: cleanndr
 
 ## 👤 Author
 

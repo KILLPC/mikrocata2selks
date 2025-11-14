@@ -6,7 +6,7 @@ import socket
 import re
 import ipaddress
 from time import sleep
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone, timedelta
 import pyinotify
 import ujson
 import json
@@ -15,7 +15,7 @@ from librouteros import connect
 from librouteros.query import Key
 import requests
 
-VERSION = "3.0.2"
+VERSION = "4.0.0"
 
 # ------------------------------------------------------------------------------
 ################# START EDIT SETTINGS
@@ -39,6 +39,11 @@ WAN_IP = "yourpublicip"
 LOCAL_IP_PREFIX = "192.168.0.0/16"
 WHITELIST_IPS = (WAN_IP, LOCAL_IP_PREFIX, "127.0.0.1", "1.1.1.1", "8.8.8.8", "fe80:", "10.0.0.0/8", "172.16.0.0/12")
 COMMENT_TIME_FORMAT = "%-d %b %Y %H:%M:%S.%f"  # See datetime strftime formats.
+
+# Timezone offset for timestamps in notifications (in hours from UTC)
+# Examples: 0 for UTC, 3 for UTC+3 (Moscow), -5 for UTC-5 (EST), 1 for UTC+1 (CET)
+TIMEZONE_OFFSET = 0  # Set your timezone offset here
+
 ENABLE_IPV6 = False
 
 #Set comma separated value of suricata alerts severity which will be blocked in Mikrotik. All severity values are ("1","2","3")
@@ -56,9 +61,9 @@ DEBUG_MODE = False
 # ------------------------------------------------------------------------------
 LISTEN_INTERFACE=("tzsp0")
 
-# Suricata log file
-SELKS_CONTAINER_DATA_SURICATA_LOG="/root/SELKS/docker/containers-data/suricata/logs/"
-FILEPATH = os.path.abspath(SELKS_CONTAINER_DATA_SURICATA_LOG + "eve.json")
+# Suricata log file - Clean NDR default path
+NDR_SURICATA_LOG_PATH="/root/NDR/config/containers-data/suricata/logs/"
+FILEPATH = os.path.abspath(NDR_SURICATA_LOG_PATH + "eve.json")
 
 # Save Mikrotik address lists to a file and reload them on Mikrotik reboot.
 # You can add additional list(s), e.g. [BLOCK_LIST_NAME, "blocklist1", "list2"]
@@ -109,18 +114,18 @@ def is_ip_in_whitelist(ip_to_check, whitelist):
             ip_obj = ipaddress.IPv6Address(ip_to_check)
         else:  # IPv4
             ip_obj = ipaddress.IPv4Address(ip_to_check)
-            
+
         for item in whitelist:
             # Direct IP match
             if ip_to_check == item:
                 debug_log(f"IP {ip_to_check} matches exact whitelist entry {item}")
                 return True
-                
+
             # String prefix match (like "192.168.")
             if isinstance(item, str) and not '/' in item and ip_to_check.startswith(item):
                 debug_log(f"IP {ip_to_check} matches prefix whitelist entry {item}")
                 return True
-                
+
             # CIDR notation check (like "10.0.0.0/8")
             if '/' in item:
                 try:
@@ -130,10 +135,10 @@ def is_ip_in_whitelist(ip_to_check, whitelist):
                         return True
                 except ValueError:
                     print(f"[Mikrocata] Warning: Invalid CIDR notation in whitelist: {item}")
-                    
+
         debug_log(f"IP {ip_to_check} is not in any whitelist entry")
         return False
-        
+
     except ValueError as e:
         debug_log(f"Error checking whitelist for IP {ip_to_check}: {e}")
         # If we can't parse the IP, we should not whitelist it
@@ -162,18 +167,28 @@ def seek_to_end(fpath):
     global last_pos
 
     if not ADD_ON_START:
+        retry_count = 0
         while True:
             try:
                 last_pos = os.path.getsize(fpath)
                 return
 
             except FileNotFoundError:
+                retry_count += 1
                 print(f"[Mikrocata] File: {fpath} not found. Retrying in 10 seconds..")
+
+                # Show helpful message after several retries
+                if retry_count % 6 == 0:  # Every minute (6 retries * 10 seconds)
+                    print(f"[Mikrocata] TIP: Check if Clean NDR is running and if NDR_SURICATA_LOG_PATH is correct in the config")
+                    print(f"[Mikrocata]      Current path: {NDR_SURICATA_LOG_PATH}")
+                    print(f"[Mikrocata]      Check Clean NDR status: docker ps | grep suricata")
+
                 sleep(10)
                 continue
 
 def read_json(fpath):
     global last_pos
+    retry_count = 0
     while True:
         try:
             with open(fpath, "r") as f:
@@ -192,7 +207,15 @@ def read_json(fpath):
                 last_pos = f.tell()
                 return alerts
         except FileNotFoundError:
+            retry_count += 1
             print(f"[Mikrocata] File: {fpath} not found. Retrying in 10 seconds..")
+
+            # Show helpful message after several retries
+            if retry_count % 6 == 0:  # Every minute (6 retries * 10 seconds)
+                print(f"[Mikrocata] TIP: Check if Clean NDR is running and if NDR_SURICATA_LOG_PATH is correct in the config")
+                print(f"[Mikrocata]      Current path: {NDR_SURICATA_LOG_PATH}")
+                print(f"[Mikrocata]      Check Clean NDR status: docker ps | grep suricata")
+
             sleep(10)
             continue
 
@@ -200,18 +223,18 @@ def add_to_tik(alerts):
     global last_pos
     global api
     global last_save_time
-    
+
     _address = Key("address")
     _id = Key(".id")
     _list = Key("list")
 
     if DEBUG_MODE:
         print(f"[Mikrocata] Processing {len(alerts)} alert events")
-    
+
     if not alerts:
         debug_log("No alerts to process")
         return
-        
+
     try:
         address_list = api.path("/ip/firewall/address-list")
         address_list_v6 = api.path("/ipv6/firewall/address-list")
@@ -224,10 +247,10 @@ def add_to_tik(alerts):
     # Remove duplicate src_ips
     unique_alerts = {item['src_ip']: item for item in alerts}.values()
     debug_log(f"Processing {len(unique_alerts)} unique source IPs from alerts")
-    
+
     for event in unique_alerts:
         debug_log(f"Processing alert: SID={event['alert']['signature_id']}, Severity={event['alert']['severity']}")
-        
+
         # Check alert severity
         if str(event["alert"]["severity"]) not in SEVERITY:
             print(f"[Mikrocata] Skipping alert SID={event['alert']['signature_id']} (severity {event['alert']['severity']})")
@@ -242,24 +265,36 @@ def add_to_tik(alerts):
         if in_ignore_list(ignore_list, event):
             print(f"[Mikrocata] Skipping alert {event['alert']['signature_id']} - in ignore list")
             continue
-            
+
         debug_log(f"Alert passed all filters, preparing to add to MikroTik")
-            
+
         try:
-            timestamp = dt.strptime(event["timestamp"],
-                                   "%Y-%m-%dT%H:%M:%S.%f%z").strftime(
-                                       COMMENT_TIME_FORMAT)
+            # Parse timestamp from Suricata (UTC)
+            parsed_time = dt.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%f%z")
+
+            # Convert to local timezone if TIMEZONE_OFFSET is set
+            if TIMEZONE_OFFSET != 0:
+                local_tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
+                parsed_time = parsed_time.astimezone(local_tz)
+                debug_log(f"Converted timestamp to UTC{TIMEZONE_OFFSET:+d}: {parsed_time}")
+
+            timestamp = parsed_time.strftime(COMMENT_TIME_FORMAT)
         except Exception as e:
             debug_log(f"Error parsing timestamp {event['timestamp']}: {str(e)}")
-            timestamp = dt.now().strftime(COMMENT_TIME_FORMAT)
-            
+            # Use current time in local timezone
+            if TIMEZONE_OFFSET != 0:
+                local_tz = timezone(timedelta(hours=TIMEZONE_OFFSET))
+                timestamp = dt.now(local_tz).strftime(COMMENT_TIME_FORMAT)
+            else:
+                timestamp = dt.now().strftime(COMMENT_TIME_FORMAT)
+
         # Determine if IPv6
         is_v6 = ':' in event["src_ip"]
         curr_list = address_list
         if ENABLE_IPV6 and is_v6:
             debug_log(f"IPv6 address detected: {event['src_ip']}")
             curr_list = address_list_v6
-            
+
         # Check whitelist with improved function
         if is_ip_in_whitelist(event["src_ip"], WHITELIST_IPS):
             debug_log(f"Source IP {event['src_ip']} in whitelist")
@@ -284,15 +319,15 @@ def add_to_tik(alerts):
             # Log original signature before sanitizing
             original_signature = event['alert']['signature']
             debug_log(f"Original signature: {original_signature}")
-            
+
             # Sanitize the signature to remove emojis and special characters
             signature = sanitize_text(original_signature)
             debug_log(f"Sanitized signature: {signature}")
-            
+
             # If significant information was lost in sanitization, log a warning
             if len(signature) < len(original_signature) * 0.7:  # If more than 30% of chars were removed
                 debug_log(f"WARNING: Significant information lost during sanitization!")
-                
+
             cmnt = f"""[{event['alert']['gid']}:{
                          event['alert']['signature_id']}] {
                          signature} ::: Port: {
@@ -302,14 +337,14 @@ def add_to_tik(alerts):
 
             debug_log(f"Adding to list '{BLOCK_LIST_NAME}': IP={wanted_ip}, Timeout={TIMEOUT}")
             debug_log(f"Comment: {cmnt}")
-            
+
             curr_list.add(list=BLOCK_LIST_NAME,
                          address=wanted_ip,
                          comment=cmnt,
                          timeout=TIMEOUT)
 
             print(f"[Mikrocata] BLOCKED: {wanted_ip} - SID:{event['alert']['signature_id']} - Severity:{event['alert']['severity']}")
-            
+
             # Telegram notifications
             if enable_telegram:
                 debug_log("Telegram notifications enabled, sending message")
@@ -320,24 +355,24 @@ def add_to_tik(alerts):
 
         except librouteros.exceptions.TrapError as e:
             debug_log(f"MikroTik TrapError: {str(e)}")
-            
+
             if "failure: already have such entry" in str(e):
                 debug_log(f"IP {wanted_ip} already exists in list {BLOCK_LIST_NAME}, updating entry")
-                
+
                 # Find and remove existing entry
                 existing_entries = list(curr_list.select(_id, _list, _address).where(
                         _address == wanted_ip,
                         _list == BLOCK_LIST_NAME))
-                
+
                 debug_log(f"Found {len(existing_entries)} existing entries for {wanted_ip}")
-                
+
                 for row in existing_entries:
                     debug_log(f"Removing existing entry with ID {row['.id']}")
                     curr_list.remove(row[".id"])
 
                 # Sanitize the signature here too
                 signature = sanitize_text(event['alert']['signature'])
-                
+
                 # Add updated entry
                 updated_comment = f"""[{event['alert']['gid']}:{
                                  event['alert']['signature_id']}] {
@@ -345,7 +380,7 @@ def add_to_tik(alerts):
                                  wanted_port}/{
                                  event['proto']} ::: timestamp: {
                                  timestamp}"""
-                                 
+
                 debug_log(f"Re-adding IP {wanted_ip} with updated comment")
                 curr_list.add(list=BLOCK_LIST_NAME,
                              address=wanted_ip,
@@ -360,7 +395,7 @@ def add_to_tik(alerts):
         except socket.timeout as e:
             print(f"[Mikrocata] Socket timeout: {str(e)}, reconnecting...")
             connect_to_tik()
-        
+
         except Exception as e:
             print(f"[Mikrocata] ERROR: {type(e).__name__} while processing {wanted_ip}: {str(e)}")
             if DEBUG_MODE:
@@ -372,15 +407,15 @@ def add_to_tik(alerts):
     current_time = int(dt.now().timestamp())
     time_since_last_save = current_time - last_save_time
     debug_log(f"Time since last save: {time_since_last_save} seconds (interval: {SAVE_INTERVAL} seconds)")
-    
+
     if time_since_last_save >= SAVE_INTERVAL:
         debug_log(f"Save interval reached, saving lists and checking router uptime")
         last_save_time = current_time
-        
+
         # Check router uptime and restore lists if needed
         debug_log("Checking MikroTik uptime")
         uptime_check = check_tik_uptime(resources)
-        
+
         if uptime_check:
             print("[Mikrocata] Router rebooted - restoring saved lists")
             try:
@@ -403,9 +438,9 @@ def add_to_tik(alerts):
                 debug_log("Successfully saved IPv6 address lists")
         except Exception as e:
             print(f"[Mikrocata] ERROR: Failed to save lists: {str(e)}")
-        
+
         debug_log("Lists saved successfully")
-    
+
     debug_log("Alert processing completed")
 
 def check_tik_uptime(resources):
@@ -460,10 +495,10 @@ def check_tik_uptime(resources):
 
 def connect_to_tik():
     global api
-    
+
     # Determine which port to use
     actual_port = 8729 if USE_SSL else 8728
-    
+
     while True:
         try:
             if USE_SSL:
@@ -482,8 +517,10 @@ def connect_to_tik():
                     ctx.set_ciphers('DEFAULT@SECLEVEL=2')
 
                 # Connect with SSL
+                # Use lambda to explicitly pass server_hostname (required for Python 3.10+)
                 api = connect(username=USERNAME, password=PASSWORD, host=ROUTER_IP,
-                            ssl_wrapper=ctx.wrap_socket, port=actual_port)
+                            ssl_wrapper=lambda sock: ctx.wrap_socket(sock, server_hostname=ROUTER_IP),
+                            port=actual_port)
             else:
                 # Plain connection without SSL
                 api = connect(username=USERNAME, password=PASSWORD, host=ROUTER_IP,
@@ -602,13 +639,13 @@ def sendTelegram(message):
 
 def main():
 
-    print(f"[Mikrocata] Starting Mikrocata2SELKS v{VERSION}")
+    print(f"[Mikrocata] Starting Mikrocata v{VERSION}")
 
     if DEBUG_MODE:
         print("[Mikrocata] Starting in DEBUG mode - verbose logging enabled")
     else:
         print("[Mikrocata] Starting in normal mode")
-        
+
     seek_to_end(FILEPATH)
     connect_to_tik()
     read_ignore_list(IGNORE_LIST_LOCATION)
@@ -643,7 +680,7 @@ def main():
         except KeyError as e:
             print(f"[Mikrocata] KeyError: {str(e)}")
             continue
-        
+
         except Exception as e:
             print(f"[Mikrocata] Unexpected error: {str(e)}")
             if DEBUG_MODE:

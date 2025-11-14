@@ -1,5 +1,5 @@
 #!/bin/bash
-# easyinstall.sh - A script to install Mikrocata for SELKS or Clean NDR
+# easyinstall.sh - A script to install Mikrocata for Clean NDR
 
 install_dependencies() {
     echo "--- Install required package ---"
@@ -84,63 +84,6 @@ install_base_components() {
     cd $PATH_GIT_MIKROCATA
 }
 
-install_selks() {
-    echo "--- Start SELKS Installer ---"
-    
-    # Validate SELKS installation path
-    while true; do
-        read -e -p "Enter the installation path for SELKS: " -i "$HOME/SELKS" PATH_SELKS
-        if [[ -n "$PATH_SELKS" && "$PATH_SELKS" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
-            break
-        else
-            echo "Error: Please enter a valid path (no spaces or special characters except /, -, ., _)"
-        fi
-    done
-    
-    PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    sed -i '/SELKS_CONTAINER_DATA_SURICATA_LOG=/c\SELKS_CONTAINER_DATA_SURICATA_LOG="'$PATH_SELKS'/docker/containers-data/suricata/logs/"' "$PATH_GIT_MIKROCATA/mikrocata.py"
-    
-    # Validate MikroTik device count
-    while true; do
-        read -p "How many Mikrotik devices to configure? " HOW_MANY_MIKROTIK
-        if [[ "$HOW_MANY_MIKROTIK" =~ ^[1-9][0-9]*$ ]]; then
-            break
-        else
-            echo "Error: Please enter a valid number (1 or greater)"
-        fi
-    done
-    
-    # Save original value before it gets decremented by install_base_components
-    HOW_MANY_MIKROTIK_ORIGINAL=$HOW_MANY_MIKROTIK
-    
-    install_dependencies
-    install_base_components
-
-    git clone https://github.com/StamusNetworks/SELKS.git $PATH_SELKS
-    cd $PATH_SELKS/docker/
-
-    num=0
-    cmd2=""
-    HOW_MANY_MIKROTIK_LOOPS=$(( $HOW_MANY_MIKROTIK_ORIGINAL - 1 ))
-    while [ $num -le $HOW_MANY_MIKROTIK_LOOPS ]
-    do
-        cmd2="$cmd2 -i tzsp$num"
-        num=$(( $num + 1 ))
-    done
-
-    echo "--- SELKS interfaces parameter: $cmd2 ---"
-    if [ -z "$cmd2" ]; then
-        echo "ERROR: No interfaces configured. Setting default interface."
-        cmd2="-i tzsp0"
-    fi
-
-    eval "./easy-setup.sh --non-interactive $cmd2 --iA --restart-mode always --es-memory 6G"
-    docker compose up -d
-
-    echo "--- SELKS INSTALL COMPLETED ---"
-    print_summary
-}
-
 install_clean_ndr() {
     echo "--- Clean NDR Installer ---"
     
@@ -155,12 +98,13 @@ install_clean_ndr() {
     done
     mkdir -p $PATH_NDR
     
-    echo "--- DISCLAIMER: At the moment, only one Mikrotik device is supported for Clean NDR. ---"
+    echo "--- DISCLAIMER: Only one Mikrotik device is officially supported. ---"
+    echo "--- Multiple Mikrotik devices can be configured manually (will be documented in future updates). ---"
     sleep 3
     HOW_MANY_MIKROTIK=1
     
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    sed -i '/SELKS_CONTAINER_DATA_SURICATA_LOG=/c\SELKS_CONTAINER_DATA_SURICATA_LOG="'$PATH_NDR'/config/containers-data/suricata/logs/"' "$PATH_GIT_MIKROCATA/mikrocata.py"
+    sed -i '/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH="'$PATH_NDR'/config/containers-data/suricata/logs/"' "$PATH_GIT_MIKROCATA/mikrocata.py"
     
     install_dependencies
     install_base_components
@@ -186,18 +130,9 @@ uninstall() {
         exit 1
     fi
 
-    # Ask what to uninstall with validation
-    while true; do
-        echo "Which system are you uninstalling?"
-        echo "1. SELKS"
-        echo "2. Clean NDR"
-        read -p "Enter your choice [1-2]: " uninstall_choice
-        if [[ "$uninstall_choice" =~ ^[1-2]$ ]]; then
-            break
-        else
-            echo "Error: Please enter 1 or 2"
-        fi
-    done
+    # Clean NDR uninstall (SELKS is no longer supported)
+    echo "This will uninstall Clean NDR."
+    uninstall_choice=2
 
     # Detect interfaces (common step)
     echo "--- Detecting number of configured interfaces ---"
@@ -236,56 +171,28 @@ uninstall() {
 
     rm -rf /var/lib/mikrocata
 
-    # Specific uninstallation logic
-    case $uninstall_choice in
-        1)
-            # Uninstall SELKS with path validation
-            while true; do
-                read -e -p "Enter the installation path for SELKS that was used: " -i "$HOME/SELKS" PATH_SELKS
-                if [[ -n "$PATH_SELKS" && "$PATH_SELKS" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
-                    break
-                else
-                    echo "Error: Please enter a valid path (no spaces or special characters except /, -, ., _)"
-                fi
-            done
-            if [ -d "$PATH_SELKS" ]; then
-                echo "--- Removing SELKS from $PATH_SELKS ---"
-                cd $PATH_SELKS/docker
-                docker compose down
-                cd $HOME
-                rm -rf $PATH_SELKS
-            else
-                echo "--- SELKS directory not found at $PATH_SELKS, skipping ---"
-            fi
-            ;;
-        2)
-            # Uninstall Clean NDR with path validation
-            while true; do
-                read -e -p "Enter the installation path for Clean NDR that was used: " -i "/root/NDR" PATH_NDR
-                if [[ -n "$PATH_NDR" && "$PATH_NDR" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
-                    break
-                else
-                    echo "Error: Please enter a valid path (no spaces or special characters except /, -, ., _)"
-                fi
-            done
-            if [ -d "$PATH_NDR" ]; then
-                echo "--- Removing Clean NDR from $PATH_NDR ---"
-                cd $PATH_NDR
-                stamusctl compose down
-                cd ..
-                rm -rf $PATH_NDR
-            else
-                echo "--- Clean NDR directory not found at $PATH_NDR, skipping ---"
-            fi
-            
-            if [ -f "/usr/local/bin/stamusctl" ]; then
-                rm -f /usr/local/bin/stamusctl
-            fi
-            ;;
-        *)
-            echo "Invalid option. Skipping NDR/SELKS removal."
-            ;;
-    esac
+    # Uninstall Clean NDR with path validation
+    while true; do
+        read -e -p "Enter the installation path for Clean NDR that was used: " -i "/root/NDR" PATH_NDR
+        if [[ -n "$PATH_NDR" && "$PATH_NDR" =~ ^[a-zA-Z0-9/_.-]+$ ]]; then
+            break
+        else
+            echo "Error: Please enter a valid path (no spaces or special characters except /, -, ., _)"
+        fi
+    done
+    if [ -d "$PATH_NDR" ]; then
+        echo "--- Removing Clean NDR from $PATH_NDR ---"
+        cd $PATH_NDR
+        stamusctl compose down
+        cd ..
+        rm -rf $PATH_NDR
+    else
+        echo "--- Clean NDR directory not found at $PATH_NDR, skipping ---"
+    fi
+
+    if [ -f "/usr/local/bin/stamusctl" ]; then
+        rm -f /usr/local/bin/stamusctl
+    fi
 
     # Remove common downloaded tools
     echo "--- Removing downloaded tools ---"
@@ -348,37 +255,32 @@ print_summary() {
 while true; do
     clear
     echo "========================================"
-    echo "   Mikrocata SELKS/Clean NDR Installer"
+    echo "   Mikrocata Clean NDR Installer"
     echo "========================================"
-    echo "1. Install SELKS"
-    echo "   (The classic, trusted open-source IDS/IPS platform based on Suricata, ELK, etc.)"
+    echo "1. Install Clean NDR"
+    echo "   (A free, open-source NDR solution.)"
+    echo "   NOTE: SELKS repository has been removed by Stamus Networks."
+    echo "   Only Clean NDR is now supported."
     echo ""
-    echo "2. Install Clean NDR"
-    echo "   (The next evolution of SELKS, now called Clear NDR - Community. A free, open-source NDR solution.)"
-    echo ""
-    echo "3. Uninstall"
-    echo "4. Exit"
+    echo "2. Uninstall"
+    echo "3. Exit"
     echo "========================================"
-    read -p "Enter your choice [1-4]: " choice
+    read -p "Enter your choice [1-3]: " choice
 
     case $choice in
         1)
-            install_selks
-            break
-            ;;
-        2)
             install_clean_ndr
             break
             ;;
-        3)
+        2)
             uninstall
             break
             ;;
-        4)
+        3)
             exit 0
             ;;
         *)
-            echo "Error: Please enter a number between 1 and 4"
+            echo "Error: Please enter a number between 1 and 3"
             sleep 2
             ;;
     esac
