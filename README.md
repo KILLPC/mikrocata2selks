@@ -14,12 +14,12 @@
 Mikrocata2SELKS is a streamlined solution for integrating Mikrotik devices with a powerful Network Detection and Response (NDR) system for packet analysis.
 It automates the setup process and enables efficient network traffic monitoring and threat detection.
 
-**IMPORTANT UPDATE**: Stamus Networks has removed the SELKS repository (https://github.com/StamusNetworks/SELKS.git). As a result, this project now exclusively supports **Clean NDR** (the evolution of SELKS). SELKS installation is no longer available.
+**IMPORTANT UPDATE**: Stamus Networks has removed the SELKS repository (https://github.com/StamusNetworks/SELKS.git). As a result, this project now exclusively supports **Clear NDR** (the evolution of SELKS). SELKS installation is no longer available.
 
 ```mermaid
 graph LR
     A[Mikrotik Router] -->|TZSP Traffic| B[Mikrocata]
-    B -->|Analysis| C[Clean NDR - Suricata on OpenSearch]
+    B -->|Analysis| C[Clear NDR - Suricata on OpenSearch]
     C --> D[Telegram Notifications]
     C --> E[Firewall Rules]
 ```
@@ -44,7 +44,7 @@ The installation process is now fully interactive!
 5. Navigate to the repository directory: `cd mikrocata2selks`.
 6. Run the interactive installer: `./easyinstall.sh`.
 7. Follow the on-screen menu:
-    - **Install Clean NDR**: The installer will set up Clean NDR with support for one Mikrotik device.
+    - **Install Clear NDR**: The installer will set up Clear NDR with support for one Mikrotik device.
     - **Configure**: The script will prompt you for necessary information, like the installation path.
     - **Wait...**: The script will handle the rest.
 8. Once finished, edit the configuration file (e.g., `/usr/local/bin/mikrocataTZSP0.py`) with your Mikrotik and Telegram parameters, then reload the service (e.g., `systemctl restart mikrocataTZSP0.service`).
@@ -133,9 +133,9 @@ systemctl restart mikrocataTZSP0.service
 
 ## 🛠️ Handling Multiple Mikrotik Devices
 
-**Official Support**: The Clean NDR installation officially supports **one Mikrotik device**. The installer will automatically configure a single device setup.
+**Official Support**: The Clear NDR installation officially supports **one Mikrotik device**. The installer will automatically configure a single device setup.
 
-**Manual Multi-Device Configuration**: While SELKS previously supported multiple Mikrotik devices out of the box, it is still possible to configure multiple devices with Clean NDR, but this must be done **manually**. Documentation for manual multi-device setup will be integrated in future updates.
+**Manual Multi-Device Configuration**: While SELKS previously supported multiple Mikrotik devices out of the box, it is still possible to configure multiple devices with Clear NDR, but this must be done **manually**. Documentation for manual multi-device setup will be integrated in future updates.
 
 For reference, a multi-device setup would involve:
 - Creating additional dummy interfaces (`tzsp1`, `tzsp2`, etc.) on different ports (`37009`, `37010`, etc.)
@@ -194,7 +194,7 @@ flowchart TD
 
 - Installs Docker and Docker Compose.
 - Installs Python.
-- Installs **Clean NDR**: The next-generation open-source NDR platform.
+- Installs **Clear NDR**: The next-generation open-source NDR platform.
   - **Note**: SELKS is no longer supported due to repository removal by Stamus Networks.
 - Downloads and installs Mikrocata.
 - Installs TZSP interface for packet capture.
@@ -224,10 +224,10 @@ flowchart TD
 
 
 ## 📝 Notes
-- Access Clean NDR web interface:
+- Access Clear NDR web interface:
     - URL: `https://[YOURDEBIANIP]`
-    - Username: cleanndr
-	- Password: cleanndr
+    - Username: clearndr
+	- Password: clearndr
 
 ## 👤 Author
 
