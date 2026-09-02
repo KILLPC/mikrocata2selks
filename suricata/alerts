@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# ANSI Color Definitions
+CYAN='\033[1;36m'
+NC='\033[0m' # No Color
+
+# Print a clean section banner
+echo -e "\n${CYAN}=================== [ SURICATA SECURITY ALERTS ] ===================${NC}"
+printf "%-18s %-8s %-10s %s\n" "SID" "HITS" "SEVERITY" "DESCRIPTION"
+echo "--------------------------------------------------------------------"
+
+awk '
+{
+    match($0, /\[1:[0-9]+:[0-9]+\]/)
+    sid=substr($0,RSTART,RLENGTH)
+
+    match($0, /Priority: [0-9]+/)
+    prio = (RSTART>0 ? substr($0,RSTART+10,RLENGTH-10) : "?")
+
+    if (match($0, /\[\*\*\] .* \[\*\*\]/)) {
+        msg = substr($0, RSTART+4, RLENGTH-8)
+        # Strips leading spaces (if any) AND the leading [GID:SID:REV] tag
+        gsub(/^[[:space:]]*\[[0-9]+:[0-9]+:[0-9]+\][[:space:]]*/, "", msg)
+    } else {
+        msg="(no signature text)"
+    }
+
+    count[sid]++
+    desc[sid]=msg
+    priority[sid]=prio
+}
+END {
+    for (s in count)
+        printf "%d\t%s\t%s\t%s\n",
+                count[s], s, priority[s], desc[s]
+}' /opt/mikrocata2selks/suricata/suricata-logs/fast.log* | sort -nr -k1,1 | awk -F'\t' '
+{
+    # ANSI Color Definitions (Red=1, Yellow=2, Blue=3)
+    RED="\033[1;31m"
+    YELLOW="\033[1;33m"
+    BLUE="\033[1;34m"
+    NC="\033[0m"
+
+    color = NC
+    if ($3 == "1") color = RED
+    else if ($3 == "2") color = YELLOW
+    else if ($3 == "3") color = BLUE
+
+    printf "%s%-18s %-8s %-10s %s%s\n", color, $2, $1, $3, $4, NC
+}'

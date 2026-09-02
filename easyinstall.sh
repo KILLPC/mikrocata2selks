@@ -122,6 +122,107 @@ install_clean_ndr() {
     print_summary
 }
 
+run_docker_containers() {
+    local install_suricata=$1
+    local install_sslproxy=$2
+
+    echo "--- Managing Docker containers ---"
+
+    # Handle Suricata Container
+    if [[ "$install_suricata" =~ ^[Yy]$ ]]; then
+        if [ -d "/opt/mikrocata2selks/suricata" ]; then
+            echo "Starting Suricata container..."
+            docker compose -f /opt/mikrocata2selks/suricata/docker-compose.yml up -d
+        else
+            echo "Warning: /opt/mikrocata2selks/suricata directory not found."
+        fi
+    else
+        echo "Skipping Suricata container installation."
+    fi
+
+    # Handle SSLProxy Container
+    if [[ "$install_sslproxy" =~ ^[Yy]$ ]]; then
+        if [ -d "/opt/mikrocata2selks/suricata/sslproxy" ]; then
+            echo "Starting SSLProxy container..."
+            docker compose -f /opt/mikrocata2selks/suricata/sslproxy/docker-compose.yaml up -d
+        else
+            echo "Warning: /opt/mikrocata2selks/suricata/sslproxy directory not found."
+        fi
+    else
+        echo "Skipping SSLProxy container installation."
+    fi
+}
+
+setup_fstab_and_mount() {
+    echo "--- Configuring fstab and mounting ramdisk ---"
+    FSTAB_LINE="tmpfs   /mnt/ramdisk   tmpfs   rw,nosuid,nodev,noexec,size=200M,uid=1000,gid=1000,mode=0755   0   0"
+    
+    mkdir -p /mnt/ramdisk
+    if ! grep -qs '/mnt/ramdisk' /etc/fstab; then
+        echo "$FSTAB_LINE" >> /etc/fstab
+    fi
+    mount -a
+}
+
+remove_fstab_and_mount() {
+    echo "--- Removing ramdisk from fstab ---"
+    umount /mnt/ramdisk 2>/dev/null || true
+    sed -i '\|/mnt/ramdisk|d' /etc/fstab
+}
+
+setup_cron_and_logrotate() {
+    echo "--- Configuring logrotate and cron jobs ---"
+    PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+    # Copy logrotate config
+    if [ -f "$PATH_GIT_MIKROCATA/suricata/suricata-eve" ]; then
+        cp "$PATH_GIT_MIKROCATA/suricata/suricata-eve" /etc/logrotate.d/suricata-eve
+        chmod 644 /etc/logrotate.d/suricata-eve
+    fi
+
+    # Append cron jobs if they don't exist
+    CRON_RULE="0 22 * * * bash $PATH_GIT_MIKROCATA/suricata/rules-data/downloadv2.sh"
+    CRON_ROTATE="*/5 * * * * /usr/sbin/logrotate /etc/logrotate.d/suricata-eve >/dev/null 2>&1"
+
+    ( crontab -l 2>/dev/null | grep -v 'downloadv2.sh' | grep -v 'suricata-eve' ; echo "$CRON_RULE" ; echo "$CRON_ROTATE" ) | crontab -
+}
+
+remove_cron_and_logrotate() {
+    echo "--- Removing logrotate and cron jobs ---"
+    rm -f /etc/logrotate.d/suricata-eve
+    ( crontab -l 2>/dev/null | grep -v 'downloadv2.sh' | grep -v 'suricata-eve' ) | crontab -
+}
+
+install_mikrocata_suricata() {
+    echo "--- Mikrocata Services + Suricata Setup ---"
+    
+    # Prompt user for container options
+    read -p "Do you want to install and start the Docker Suricata container? [y/N]: " -n 1 -r REPLY_SURICATA
+    echo
+    read -p "Do you want to install and start the SSLProxy container? [y/N]: " -n 1 -r REPLY_SSLPROXY
+    echo
+
+    HOW_MANY_MIKROTIK=1
+    setup_fstab_and_mount
+    install_dependencies
+    install_base_components
+    
+
+    PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    num=0
+    HOW_MANY_MIKROTIK_LOOPS=$(( $HOW_MANY_MIKROTIK - 1 ))
+    while [ $num -le $HOW_MANY_MIKROTIK_LOOPS ]; do
+        sed -i '/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH="/mnt/ramdisk/"' /usr/local/bin/mikrocataTZSP$num.py
+        num=$(( $num + 1 ))
+    done
+
+    # Pass user choices to container runner
+    run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY"
+    
+    setup_cron_and_logrotate
+    print_summary
+}
+
 uninstall() {
     echo "--- Uninstalling all components ---"
     read -p "Are you sure you want to uninstall all components? [y/N] " -n 1 -r
@@ -205,6 +306,10 @@ uninstall() {
     echo "--- Reloading systemd ---"
     systemctl daemon-reload
     systemctl restart systemd-networkd
+    docker compose -f /opt/mikrocata2selks/suricata/docker-compose.yml down
+    docker compose -f /opt/mikrocata2selks/suricata/sslproxy/docker-compose.yaml down
+    remove_cron_and_logrotate
+    remove_fstab_and_mount
 
     echo "--- UNINSTALL COMPLETED ---"
 }
@@ -262,8 +367,10 @@ while true; do
     echo "   NOTE: SELKS repository has been removed by Stamus Networks."
     echo "   Only Clean NDR is now supported."
     echo ""
-    echo "2. Uninstall"
-    echo "3. Exit"
+    echo "2. Install Mikrocata Services + Suricata"
+    echo ""
+    echo "3. Uninstall"
+    echo "4. Exit"
     echo "========================================"
     read -p "Enter your choice [1-3]: " choice
 
@@ -272,11 +379,16 @@ while true; do
             install_clean_ndr
             break
             ;;
-        2)
+
+	2)
+	    install_mikrocata_suricata
+	    break
+	    ;;
+        3)
             uninstall
             break
             ;;
-        3)
+        4)
             exit 0
             ;;
         *)

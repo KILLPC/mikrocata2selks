@@ -1,0 +1,9 @@
+/mnt/ramdisk/eve.json {
+    size 180M
+    rotate 0
+    missingok
+    notifempty
+    nocompress
+    copytruncate
+    create 0644 root root
+}
