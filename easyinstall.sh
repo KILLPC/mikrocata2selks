@@ -27,10 +27,10 @@ install_base_components() {
     make
     make install
 
-    wget -P /opt https://github.com/appneta/tcpreplay/releases/download/v4.4.2/tcpreplay-4.4.2.tar.gz
+    wget -P /opt https://github.com/appneta/tcpreplay/releases/download/v4.6.1/tcpreplay-4.6.1.tar.gz
     cd /opt
-    tar -xf /opt/tcpreplay-4.4.2.tar.gz -C /opt
-    cd /opt/tcpreplay-4.4.2/
+    tar -xf /opt/tcpreplay-4.6.1.tar.gz -C /opt
+    cd /opt/tcpreplay-4.6.1/
     ./configure
     make
     make install
@@ -198,8 +198,8 @@ uninstall() {
     echo "--- Removing downloaded tools ---"
     rm -rf /opt/tzsp2pcap-master
     rm -f /opt/master.zip
-    rm -rf /opt/tcpreplay-4.4.2
-    rm -f /opt/tcpreplay-4.4.2.tar.gz
+    rm -rf /opt/tcpreplay-4.6.1
+    rm -f /opt/tcpreplay-4.6.1.tar.gz
 
     # Reload systemd
     echo "--- Reloading systemd ---"
