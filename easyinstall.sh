@@ -27,10 +27,10 @@ install_base_components() {
     make
     make install
 
-    wget -P /opt https://github.com/appneta/tcpreplay/releases/download/v4.6.1/tcpreplay-4.6.1.tar.gz
+    wget -P /opt https://github.com/appneta/tcpreplay/releases/download/v4.4.2/tcpreplay-4.4.2.tar.gz
     cd /opt
-    tar -xf /opt/tcpreplay-4.6.1.tar.gz -C /opt
-    cd /opt/tcpreplay-4.6.1/
+    tar -xf /opt/tcpreplay-4.4.2.tar.gz -C /opt
+    cd /opt/tcpreplay-4.4.2/
     ./configure
     make
     make install
