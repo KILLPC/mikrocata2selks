@@ -4,6 +4,8 @@
     missingok
     notifempty
     nocompress
-    copytruncate
-    create 0644 root root
+    sharedscripts
+    postrotate
+        docker exec suricata suricatasc -c "reopen-log-files" > /dev/null 2>&1 || docker kill -s HUP suricata > /dev/null 2>&1 || true
+    endscript
 }
