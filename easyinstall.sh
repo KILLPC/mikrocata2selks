@@ -237,13 +237,24 @@ install_mikrocata_suricata() {
     
 
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    num=0
-    HOW_MANY_MIKROTIK_LOOPS=$(( $HOW_MANY_MIKROTIK - 1 ))
-    while [ $num -le $HOW_MANY_MIKROTIK_LOOPS ]; do
-        sed -i '/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH="/mnt/ramdisk/"' /usr/local/bin/mikrocataTZSP$num.py
-        num=$(( $num + 1 ))
-    done
+    # Define target path based on user choice
+    if [[ "$REPLY_RAMDISK" =~ ^[Yy]$ ]]; then
+        LOG_PATH="/mnt/ramdisk/"
+    else
+        LOG_PATH="${PATH_GIT_MIKROCATA}/suricata/suricata-logs/"
+    fi
 
+    # Update path in the mikrocata Python script(s)
+    # Loop manually using standard bounds (0 to HOW_MANY_MIKROTIK - 1)
+    num=0
+    max_index=$(( HOW_MANY_MIKROTIK - 1 ))
+    while [ $num -le $max_index ]; do
+        if [ -f "/usr/local/bin/mikrocataTZSP$num.py" ]; then
+            sed -i "/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH=\"$LOG_PATH\"" "/usr/local/bin/mikrocataTZSP$num.py"
+        fi
+        num=$(( num + 1 ))
+    done
+	
     # Pass user choices to container runner
     run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY" "$REPLY_RAMDISK"
     
