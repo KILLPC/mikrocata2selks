@@ -1,0 +1,29 @@
+#!/bin/bash
+
+SIG_ID=$1
+EVE_LOG="/mnt/ramdisk/eve.json"
+
+if [ ! -f "$EVE_LOG" ]; then
+  echo "Error: $EVE_LOG not found!" >&2
+  exit 1
+fi
+
+jq -r --argjson sid "$SIG_ID" '
+  select(.event_type=="alert" and .alert.signature_id==$sid) |
+  "==================================================\n" +
+  "TIMESTAMP : \(.timestamp)\n" +
+  "SEVERITY  : \(.alert.severity) (\(.alert.category))\n" +
+  "SIGNATURE : [\(.alert.gid):\(.alert.signature_id)] \(.alert.signature)\n" +
+  "ACTION    : \(.alert.action) | DIRECTION: \(.direction)\n" +
+  "SOURCE    : \(.src_ip):\(.src_port)\n" +
+  "TARGET    : \(.dest_ip):\(.dest_port) (\(.proto))\n" +
+  "HOSTNAME  : \(.http.hostname // "N/A")\n" +
+  "URL       : \(.http.url // "N/A")\n" +
+  "USER AGENT: \(.http.http_user_agent // "N/A")\n" +
+  "REFERER   : \(.http.http_refer // "N/A")\n" +
+  "--------------------------------------------------\n" +
+  "PROGRESS  : Client(\(.ts_progress // "N/A")) / Server(\(.tc_progress // "N/A"))\n" +
+  "PACKETS   : To Server: \(.flow.pkts_toserver // 0) | To Client: \(.flow.pkts_toclient // 0)\n" +
+  "BYTES     : Sent: \(.flow.bytes_toserver // 0) B | Received: \(.flow.bytes_toclient // 0) B\n" +
+  "=================================================="
+' "$EVE_LOG"

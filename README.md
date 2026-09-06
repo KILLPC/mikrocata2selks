@@ -248,3 +248,7 @@ Contributions, issues, and feature requests are welcome! Check the [issues page]
 Give a ⭐️ if this project helped you!
 
 - **XMR**: `87LLkcvwm7JUZAVjusKsnwNRPfhegxe73X7X3mWXDPMnTBCb6JDFnspbN8qdKZA6StHXqnJxMp3VgRK7DcS2sgnW3wH7Xhw`
+
+Credits for the extra functions.
+- https://github.com/jasonish/docker-suricata
+- https://github.com/sonertari/SSLproxy
