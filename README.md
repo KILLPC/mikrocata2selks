@@ -45,6 +45,7 @@ The installation process is now fully interactive!
 6. Run the interactive installer: `./easyinstall.sh`.
 7. Follow the on-screen menu:
     - **Install Clear NDR**: The installer will set up Clear NDR with support for one Mikrotik device.
+    - **Install Mikrocata Services + Suri Docker + SSLproxy**: The installer will set up Suricata only with SSLproxy if selected. with support for one Mikrotik device. Best for ARM device like pi where the Clear NDR is not officially supporting the arm cpu architecture.
     - **Configure**: The script will prompt you for necessary information, like the installation path.
     - **Wait...**: The script will handle the rest.
 8. Once finished, edit the configuration file (e.g., `/usr/local/bin/mikrocataTZSP0.py`) with your Mikrotik and Telegram parameters, then reload the service (e.g., `systemctl restart mikrocataTZSP0.service`).
