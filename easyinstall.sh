@@ -125,16 +125,31 @@ install_clean_ndr() {
 run_docker_containers() {
     local install_suricata=$1
     local install_sslproxy=$2
+    local use_ramdisk=$3
 
     echo "--- Managing Docker containers ---"
 
+    PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    SURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
+    SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/sslproxy/docker-compose.yaml"
+
     # Handle Suricata Container
     if [[ "$install_suricata" =~ ^[Yy]$ ]]; then
-        if [ -d "/opt/mikrocata2selks/suricata" ]; then
+        if [ -f "$SURICATA_COMPOSE" ]; then
+            
+            # Dynamically modify docker-compose.yml for RAM Disk selection
+            if [[ "$use_ramdisk" =~ ^[Yy]$ ]]; then
+                echo "--> Enabling /mnt/ramdisk volume mapping in docker-compose.yml..."
+                sed -i 's|.*\/mnt\/ramdisk:\/var\/log\/suricata\/eve.*|      - /mnt/ramdisk:/var/log/suricata/eve|g' "$SURICATA_COMPOSE"
+            else
+                echo "--> Disabling /mnt/ramdisk volume mapping in docker-compose.yml..."
+                sed -i 's|.*\/mnt\/ramdisk:\/var\/log\/suricata\/eve.*|      # - /mnt/ramdisk:/var/log/suricata/eve|g' "$SURICATA_COMPOSE"
+            fi
+
             echo "Starting Suricata container..."
-            docker compose -f /opt/mikrocata2selks/suricata/docker-compose.yml up -d
+            docker compose -f "$SURICATA_COMPOSE" up -d
         else
-            echo "Warning: /opt/mikrocata2selks/suricata directory not found."
+            echo "Warning: Suricata docker-compose file not found at $SURICATA_COMPOSE."
         fi
     else
         echo "Skipping Suricata container installation."
@@ -142,11 +157,11 @@ run_docker_containers() {
 
     # Handle SSLProxy Container
     if [[ "$install_sslproxy" =~ ^[Yy]$ ]]; then
-        if [ -d "/opt/mikrocata2selks/suricata/sslproxy" ]; then
+        if [ -f "$SSLPROXY_COMPOSE" ]; then
             echo "Starting SSLProxy container..."
-            docker compose -f /opt/mikrocata2selks/suricata/sslproxy/docker-compose.yaml up -d
+            docker compose -f "$SSLPROXY_COMPOSE" up -d
         else
-            echo "Warning: /opt/mikrocata2selks/suricata/sslproxy directory not found."
+            echo "Warning: SSLProxy docker-compose file not found at $SSLPROXY_COMPOSE."
         fi
     else
         echo "Skipping SSLProxy container installation."
@@ -155,13 +170,19 @@ run_docker_containers() {
 
 setup_fstab_and_mount() {
     echo "--- Configuring fstab and mounting ramdisk ---"
-    FSTAB_LINE="tmpfs   /mnt/ramdisk   tmpfs   rw,nosuid,nodev,noexec,size=200M,uid=1000,gid=1000,mode=0755   0   0"
     
-    mkdir -p /mnt/ramdisk
-    if ! grep -qs '/mnt/ramdisk' /etc/fstab; then
-        echo "$FSTAB_LINE" >> /etc/fstab
+    if [[ "$REPLY_RAMDISK" =~ ^[Yy]$ ]]; then
+        FSTAB_LINE="tmpfs   /mnt/ramdisk   tmpfs   rw,nosuid,nodev,noexec,size=200M,uid=1000,gid=1000,mode=0755   0   0"
+        
+        mkdir -p /mnt/ramdisk
+        if ! grep -qs '/mnt/ramdisk' /etc/fstab; then
+            echo "$FSTAB_LINE" >> /etc/fstab
+        fi
+        mount -a
+        echo "--> /mnt/ramdisk mounted successfully."
+    else
+        echo "--> RAM Disk disabled by user. Skipping."
     fi
-    mount -a
 }
 
 remove_fstab_and_mount() {
@@ -174,17 +195,22 @@ setup_cron_and_logrotate() {
     echo "--- Configuring logrotate and cron jobs ---"
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-    # Copy logrotate config
-    if [ -f "$PATH_GIT_MIKROCATA/suricata/suricata-eve" ]; then
-        cp "$PATH_GIT_MIKROCATA/suricata/suricata-eve" /etc/logrotate.d/suricata-eve
-        chmod 644 /etc/logrotate.d/suricata-eve
-    fi
-
-    # Append cron jobs if they don't exist
     CRON_RULE="0 22 * * * bash $PATH_GIT_MIKROCATA/suricata/rules-data/downloadv2.sh"
     CRON_ROTATE="*/5 * * * * /usr/sbin/logrotate /etc/logrotate.d/suricata-eve >/dev/null 2>&1"
 
-    ( crontab -l 2>/dev/null | grep -v 'downloadv2.sh' | grep -v 'suricata-eve' ; echo "$CRON_RULE" ; echo "$CRON_ROTATE" ) | crontab -
+    if [[ "$REPLY_RAMDISK" =~ ^[Yy]$ ]]; then
+        # Copy logrotate config for RAM Disk usage
+        if [ -f "$PATH_GIT_MIKROCATA/suricata/suricata-eve" ]; then
+            cp "$PATH_GIT_MIKROCATA/suricata/suricata-eve" /etc/logrotate.d/suricata-eve
+            chmod 644 /etc/logrotate.d/suricata-eve
+        fi
+
+        # Append both rule update and logrotate to crontab
+        ( crontab -l 2>/dev/null | grep -v 'downloadv2.sh' | grep -v 'suricata-eve' ; echo "$CRON_RULE" ; echo "$CRON_ROTATE" ) | crontab -
+    else
+        # Skip logrotate copy, only append rule update to crontab
+        ( crontab -l 2>/dev/null | grep -v 'downloadv2.sh' | grep -v 'suricata-eve' ; echo "$CRON_RULE" ) | crontab -
+    fi
 }
 
 remove_cron_and_logrotate() {
@@ -199,6 +225,8 @@ install_mikrocata_suricata() {
     # Prompt user for container options
     read -p "Do you want to install and start the Docker Suricata container? [y/N]: " -n 1 -r REPLY_SURICATA
     echo
+	read -p "Do you want to save the suricata eve.jso to ramdisk (saves sd/ssd write cycles and faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
+	echo
     read -p "Do you want to install and start the SSLProxy container? [y/N]: " -n 1 -r REPLY_SSLPROXY
     echo
 
@@ -217,13 +245,14 @@ install_mikrocata_suricata() {
     done
 
     # Pass user choices to container runner
-    run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY"
+    run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY" "$REPLY_RAMDISK"
     
     setup_cron_and_logrotate
     print_summary
 }
 
 uninstall() {
+    PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     echo "--- Uninstalling all components ---"
     read -p "Are you sure you want to uninstall all components? [y/N] " -n 1 -r
     echo
@@ -306,8 +335,8 @@ uninstall() {
     echo "--- Reloading systemd ---"
     systemctl daemon-reload
     systemctl restart systemd-networkd
-    docker compose -f /opt/mikrocata2selks/suricata/docker-compose.yml down
-    docker compose -f /opt/mikrocata2selks/suricata/sslproxy/docker-compose.yaml down
+    docker compose -f $PATH_GIT_MIKROCATA/suricata/docker-compose.yml down
+    docker compose -f $PATH_GIT_MIKROCATA/suricata/sslproxy/docker-compose.yaml down
     remove_cron_and_logrotate
     remove_fstab_and_mount
 
