@@ -4,6 +4,8 @@
 CYAN='\033[1;36m'
 NC='\033[0m' # No Color
 
+wd="/opt/mikrocata2selks/"
+
 # Print a clean section banner
 echo -e "\n${CYAN}=================== [ SURICATA SECURITY ALERTS ] ===================${NC}"
 printf "%-18s %-8s %-10s %s\n" "SID" "HITS" "SEVERITY" "DESCRIPTION"
@@ -33,7 +35,7 @@ END {
     for (s in count)
         printf "%d\t%s\t%s\t%s\n",
                 count[s], s, priority[s], desc[s]
-}' /opt/mikrocata2selks/suricata/suricata-logs/fast.log* | sort -nr -k1,1 | awk -F'\t' '
+}' $wdsuricata/suricata-logs/fast.log* | sort -nr -k1,1 | awk -F'\t' '
 {
     # ANSI Color Definitions (Red=1, Yellow=2, Blue=3)
     RED="\033[1;31m"
