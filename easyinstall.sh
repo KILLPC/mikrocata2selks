@@ -148,6 +148,7 @@ run_docker_containers() {
 
             echo "Starting Suricata container..."
             docker compose -f "$SURICATA_COMPOSE" up -d
+			
         else
             echo "Warning: Suricata docker-compose file not found at $SURICATA_COMPOSE."
         fi
@@ -225,7 +226,7 @@ install_mikrocata_suricata() {
     # Prompt user for container options
     read -p "Do you want to install and start the Docker Suricata container? [y/N]: " -n 1 -r REPLY_SURICATA
     echo
-	read -p "Do you want to save the suricata eve.jso to ramdisk (saves sd/ssd write cycles and faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
+	read -p "Do you want to save the suricata eve.json to ramdisk (saves sd/ssd write cycles and has faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
 	echo
     read -p "Do you want to install and start the SSLProxy container? [y/N]: " -n 1 -r REPLY_SSLPROXY
     echo
