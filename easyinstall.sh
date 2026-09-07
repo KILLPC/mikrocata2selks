@@ -149,6 +149,14 @@ run_docker_containers() {
             echo "Starting Suricata container..."
             docker compose -f "$SURICATA_COMPOSE" up -d
 			
+            # Update the variable assignment in alerts and alertsdetail
+			if [ -f "${PATH_GIT_MIKROCATA}/suricata/alerts" ]; then
+                sed -i "s|^wd=.*|wd=\"${PATH_GIT_MIKROCATA}\"|" "${PATH_GIT_MIKROCATA}/suricata/alerts"
+            fi
+            if [ -f "${PATH_GIT_MIKROCATA}/suricata/alertsdetail" ]; then
+                sed -i "s|^wd=.*|wd=\"${PATH_GIT_MIKROCATA}\"|" "${PATH_GIT_MIKROCATA}/suricata/alertsdetail"
+            fi
+			
         else
             echo "Warning: Suricata docker-compose file not found at $SURICATA_COMPOSE."
         fi
