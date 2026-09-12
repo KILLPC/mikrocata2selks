@@ -1,7 +1,8 @@
 #!/bin/bash
 
 SIG_ID=$1
-EVE_LOG="/mnt/ramdisk/eve.json"
+wd="/mnt/ramdisk/"
+EVE_LOG="${wd}eve.json"
 
 if [ ! -f "$EVE_LOG" ]; then
   echo "Error: $EVE_LOG not found!" >&2
