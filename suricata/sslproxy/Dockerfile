@@ -1,5 +1,5 @@
 # ==============================================================================
-# STAGE 1: Build Environment
+# STAGE 1: Build Environment (ICAP Branch)
 # ==============================================================================
 FROM debian:trixie-slim AS builder
 
@@ -13,11 +13,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap-dev \
     libsqlite3-dev \
     libnet1-dev \
+    libnghttp2-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone SSLproxy, patch limits in protossl.c, compile, and strip binary
-RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/sonertari/SSLproxy.git /opt/sslproxy \
+# Clone the ICAP branch, apply buffer patches, compile, and strip
+RUN GIT_SSL_NO_VERIFY=true git clone -b icap https://github.com/sonertari/SSLproxy.git /opt/sslproxy \
     && cd /opt/sslproxy \
     && sed -i 's/#define MAX_CN_LEN 4096/#define MAX_CN_LEN 65536/g' src/protossl.c \
     && sed -i 's/#define MAX_CN_TOKENS 100/#define MAX_CN_TOKENS 2048/g' src/protossl.c \
@@ -31,7 +32,7 @@ FROM debian:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install all libevent runtime modules, core libraries, and python
+# Install libevent, nghttp2, networking runtime libraries, and python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -44,6 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap0.8t64 \
     libsqlite3-0 \
     libnet1 \
+    libnghttp2-14 \
     iptables \
     iproute2 \
     python3 \
