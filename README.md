@@ -75,6 +75,8 @@ The installation process is now fully interactive!
     ```sh
     /ip/service/set api address=[DEBIANIP]
     ```
+
+4. If you want to use it with SSLProxy make sure to setup the NAT for ports 8443,8444 and configure hairpin NAT in case the sslproxy is not            inline.
    
    Then configure the corresponding settings in mikrocata.py:
    ```python
