@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  icapsuricata:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: icapsuricata
+    network_mode: "host"
+    volumes:
+      - ./rules-data:/var/lib/suricata
+      - ./suricata-logs:/var/log/suricata
+      - ./icapsuricata.conf:/etc/icapsuricata/icapsuricata.conf:ro
+      - ./suricata-config/suricata.yaml:/etc/suricata/suricata.yaml:ro
+    restart: unless-stopped
