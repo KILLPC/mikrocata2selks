@@ -251,7 +251,8 @@ def add_to_tik(alerts):
         raise
 
     # Remove duplicate src_ips
-    unique_alerts = {item['src_ip']: item for item in alerts}.values()
+    #unique_alerts = {item['src_ip']: item for item in alerts}.values()
+    unique_alerts = alerts
     debug_log(f"Processing {len(unique_alerts)} unique source IPs from alerts")
 
     for event in unique_alerts:

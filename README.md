@@ -1,7 +1,7 @@
 <h1 align="center">Welcome to Mikrocata2SELKS 👋</h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-4.0.0-blue.svg?cacheSeconds=2592000" />
-  <a href="https://github.com/angolo40/mikrocata2selks" target="_blank">
+  <a href="https://github.com/KILLPC/mikrocata2selks" target="_blank">
     <img alt="License: MIT" src="https://img.shields.io/github/license/angolo40/Mikrocata2SELKS" />
   </a>
 </p>
@@ -75,6 +75,8 @@ The installation process is now fully interactive!
     ```sh
     /ip/service/set api address=[DEBIANIP]
     ```
+
+4. If you want to use it with SSLProxy make sure to setup the NAT for ports 8443,8444 and configure hairpin NAT in case the sslproxy is not            inline.
    
    Then configure the corresponding settings in mikrocata.py:
    ```python
@@ -241,7 +243,7 @@ Inspired by [zzbe/mikrocata](https://github.com/zzbe/mikrocata).
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Check the [issues page](https://github.com/angolo40/mikrocata2selks).
+Contributions, issues, and feature requests are welcome! Check the [issues page](https://github.com/KILLPC/mikrocata2selks).
 
 ## 🌟 Show Your Support
 
