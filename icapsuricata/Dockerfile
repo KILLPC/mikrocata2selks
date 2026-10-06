@@ -4,6 +4,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install modern build dependencies from Debian Trixie repositories
 RUN apt-get update && apt-get install -y \
+    cbindgen \
+    liblz4-dev \
+    libunwind-dev \
     build-essential \
     git \
     autoconf \
