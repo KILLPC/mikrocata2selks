@@ -313,4 +313,4 @@ RUN set -eux; \
 # ------------------------------------------------------------------------------
 EXPOSE 1344
 
-CMD ["/bin/sh", "-ec", "install -d -o c-icap -g c-icap /var/run/c-icap /var/log/c-icap /var/log/suricata; exec /usr/local/bin/c-icap -N -D -f /etc/c-icap/c-icap.conf"]
+CMD ["/bin/sh", "-ec", "install -d -o c-icap -g c-icap /var/run/c-icap /var/log/c-icap /var/log/suricata /usr/local/var/run/suricata; exec /usr/local/bin/c-icap -N -D -f /etc/c-icap/c-icap.conf"]
