@@ -15,7 +15,7 @@ suricata-version: "8.0"
 vars:
   # more specific is better for alert accuracy and performance
   address-groups:
-    HOME_NET: "[192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, [fe80::/10]]"
+    HOME_NET: "[192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, [fe80::/10],]"
     #HOME_NET: "[192.168.0.0/16]"
     #HOME_NET: "[10.0.0.0/8]"
     #HOME_NET: "[172.16.0.0/12]"
@@ -1705,7 +1705,7 @@ stream:
   checksum-validation: yes      # reject incorrect csums
   #midstream: false
   #midstream-policy: ignore
-  inline: auto                  # auto will use inline mode in IPS mode, yes or no set it statically
+  inline: yes                  # auto will use inline mode in IPS mode, yes or no set it statically
   reassembly:
     urgent:
       policy: oob              # drop, inline, oob (1 byte, see RFC 6093, 3.1), gap
