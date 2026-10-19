@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsqlite3-dev \
     libnet1-dev \
     libnghttp2-dev \
+    libngtcp2-dev \
+    libnghttp3-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
 
