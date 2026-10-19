@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmagic-dev \
     libjansson-dev \
     libpcre2-dev \
+    libhyperscan-dev \
     pkg-config \
     make \
     cargo \
@@ -169,7 +170,7 @@ RUN set -eux; \
 # Suricata ICAP service\n\
 Service suricata_service srv_suricata.so\n\
 suricata.Preview 1024\n\
-suricata.BufSize 4096\n\
+suricata.BufSize 65535\n\
 ' >> "$CONF"; \
     mkdir -p \
         /etc/suricata \
