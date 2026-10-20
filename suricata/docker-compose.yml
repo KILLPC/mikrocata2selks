@@ -1,10 +1,10 @@
 services:
-  icapsuricata:
+  suricata:
     build:
       context: .
       dockerfile: Dockerfile
 
-    container_name: icapsuricata
+    container_name: suricata
     network_mode: host
 
     # Suricata uses relative paths such as ./suricata.log.
