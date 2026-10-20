@@ -11,9 +11,6 @@ services:
       # Persistent Suricata data
       - ./rules-data:/var/lib/suricata
 
-      # Suricata rules
-      - ./rules:/etc/suricata/rules:ro
-
       # Suricata logs
       - ./suricata-logs:/var/log/suricata
 
