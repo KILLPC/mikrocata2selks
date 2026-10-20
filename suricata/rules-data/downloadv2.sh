@@ -1,7 +1,7 @@
 #!/bin/bash
 
-wd="/opt/mikrocata2selks/icapsuricata/rules-data"
-ex_file="/opt/mikrocata2selks/icapsuricata/rules-data/exclusions.txt"
+wd="/opt/mikrocata2selks/suricata/rules-data"
+ex_file="/opt/mikrocata2selks/suricata/rules-data/exclusions.txt"
 
 # 1. Download and extract rulesets
 sudo curl -Lo $wd/emerging.rules.tar.gz https://rules.emergingthreats.net/open/suricata-7.0.3/emerging.rules.tar.gz
