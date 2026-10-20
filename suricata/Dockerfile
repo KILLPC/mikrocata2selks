@@ -248,6 +248,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         passwd \
+        logrotate \
         $(cat /tmp/runtime-packages.txt) && \
     rm -rf /var/lib/apt/lists/* /tmp/runtime-packages.txt
 
@@ -262,6 +263,7 @@ COPY --from=builder /etc/c-icap/ /etc/c-icap/
 # Includes classification.config, reference.config, and threshold.config.
 COPY --from=builder /etc/suricata/ /etc/suricata/
 
+COPY logrotate/suricata /etc/logrotate.d/suricata
 
 # ------------------------------------------------------------------------------
 # 10. Create runtime account and directories
