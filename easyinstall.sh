@@ -86,7 +86,7 @@ install_base_components() {
 
 install_clean_ndr() {
     echo "--- Clean NDR Installer ---"
-    
+
     # Validate Clean NDR installation path
     while true; do
         read -e -p "Enter the installation path for Clean NDR: " -i "/root/NDR" PATH_NDR
@@ -97,15 +97,15 @@ install_clean_ndr() {
         fi
     done
     mkdir -p $PATH_NDR
-    
+
     echo "--- DISCLAIMER: Only one Mikrotik device is officially supported. ---"
     echo "--- Multiple Mikrotik devices can be configured manually (will be documented in future updates). ---"
     sleep 3
     HOW_MANY_MIKROTIK=1
-    
+
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     sed -i '/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH="'$PATH_NDR'/config/containers-data/suricata/logs/"' "$PATH_GIT_MIKROCATA/mikrocata.py"
-    
+
     install_dependencies
     install_base_components
 
@@ -117,7 +117,7 @@ install_clean_ndr() {
     stamusctl compose init suricata.interfaces=tzsp0
     stamusctl config set suricata.interfaces=tzsp0
     stamusctl compose up -d
-    
+
     echo "--- Clean NDR INSTALL COMPLETED ---"
     print_summary
 }
@@ -137,7 +137,7 @@ run_docker_containers() {
     # Handle Suricata Container
     if [[ "$install_suricata" =~ ^[Yy]$ ]]; then
         if [ -f "$SURICATA_COMPOSE" ]; then
-            
+
             # Dynamically modify docker-compose.yml for RAM Disk selection
             if [[ "$use_ramdisk" =~ ^[Yy]$ ]]; then
                 echo "--> Enabling /mnt/ramdisk volume mapping in docker-compose.yml..."
@@ -151,15 +151,15 @@ run_docker_containers() {
             docker compose -f "$SURICATA_COMPOSE" up -d
             docker compose -f "$ICAPSURICATA_COMPOSE" up -d
 
-			
+
             # Update the variable assignment in alerts and alertsdetail
-			if [ -f "${PATH_GIT_MIKROCATA}/suricata/alerts" ]; then
+                        if [ -f "${PATH_GIT_MIKROCATA}/suricata/alerts" ]; then
                 sed -i "s|^wd=.*|wd=\"${PATH_GIT_MIKROCATA}\"|" "${PATH_GIT_MIKROCATA}/suricata/alerts"
             fi
             if [ -f "${PATH_GIT_MIKROCATA}/suricata/alertsdetail" ]; then
                 sed -i "s|^wd=.*|wd=\"${PATH_GIT_MIKROCATA}\"|" "${PATH_GIT_MIKROCATA}/suricata/alertsdetail"
             fi
-			
+
         else
             echo "Warning: Suricata docker-compose file not found at $SURICATA_COMPOSE."
         fi
@@ -182,10 +182,10 @@ run_docker_containers() {
 
 setup_fstab_and_mount() {
     echo "--- Configuring fstab and mounting ramdisk ---"
-    
+
     if [[ "$REPLY_RAMDISK" =~ ^[Yy]$ ]]; then
         FSTAB_LINE="tmpfs   /mnt/ramdisk   tmpfs   rw,nosuid,nodev,noexec,size=200M,uid=1000,gid=1000,mode=0755   0   0"
-        
+
         mkdir -p /mnt/ramdisk
         if ! grep -qs '/mnt/ramdisk' /etc/fstab; then
             echo "$FSTAB_LINE" >> /etc/fstab
@@ -233,19 +233,20 @@ remove_cron_and_logrotate() {
 
 install_mikrocata_suricata() {
     echo "--- Mikrocata Services + Suricata Setup ---"
-    
+
     # Prompt user for container options
     read -p "Do you want to install and start the Docker Suricata container? [y/N]: " -n 1 -r REPLY_SURICATA
     echo
-	read -p "Do you want to save the suricata eve.json to ramdisk (saves sd/ssd write cycles and has faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
-	echo
+        read -p "Do you want to save the suricata eve.json to ramdisk (saves sd/ssd write cycles and has faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
+        echo
     read -p "Do you want to install and start the SSLProxy container? [y/N]: " -n 1 -r REPLY_SSLPROXY
     echo
 
+    HOW_MANY_MIKROTIK=1
     setup_fstab_and_mount
     install_dependencies
     install_base_components
-    
+
 
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     # Define target path based on user choice
@@ -265,10 +266,10 @@ install_mikrocata_suricata() {
         fi
         num=$(( num + 1 ))
     done
-	
+
     # Pass user choices to container runner
     run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY" "$REPLY_RAMDISK"
-    
+
     setup_cron_and_logrotate
     print_summary
 }
@@ -373,7 +374,7 @@ print_summary() {
     echo "---            POST-INSTALLATION CONFIGURATION                ---"
     echo "#################################################################"
     echo ""
-    
+
     port=37008
     num=0
     # This variable is expected to be decremented by install_base_components
@@ -396,7 +397,7 @@ print_summary() {
         num=$(( $num + 1 ))
         port=$(( $port + 1 ))
     done
-    
+
     echo "--- MIKROTIK ROUTER CONFIGURATION ---"
     echo "Remember to configure the following on your Mikrotik router:"
     echo "1. Enable the Sniffer to stream traffic to this server's IP on the correct port."
@@ -432,10 +433,10 @@ while true; do
             break
             ;;
 
-	2)
-	    install_mikrocata_suricata
-	    break
-	    ;;
+        2)
+            install_mikrocata_suricata
+            break
+            ;;
         3)
             uninstall
             break
@@ -449,3 +450,4 @@ while true; do
             ;;
     esac
 done
+
