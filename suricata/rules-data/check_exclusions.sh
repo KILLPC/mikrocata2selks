@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-EXCLUSIONS_FILE="/opt/mikrocata2selks/icapsuricata/rules-data/exclusions.txt"
-RULES_DIR="/opt/mikrocata2selks/icapsuricata/rules-data/rules"
+EXCLUSIONS_FILE="/opt/mikrocata2selks/suricata/rules-data/exclusions.txt"
+RULES_DIR="/opt/mikrocata2selks/suricata/rules-data/rules"
 
 if [[ ! -f "$EXCLUSIONS_FILE" ]]; then
     echo "Error: Exclusions file not found at $EXCLUSIONS_FILE"

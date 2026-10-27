@@ -1,0 +1,11 @@
+/mnt/ramdisk/eve.json {
+    size 180M
+    rotate 0
+    missingok
+    notifempty
+    nocompress
+    sharedscripts
+    postrotate
+        docker exec suricata suricatasc -c "reopen-log-files" > /dev/null 2>&1 || docker kill -s HUP suricata > /dev/null 2>&1 || true
+    endscript
+}
