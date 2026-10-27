@@ -131,7 +131,7 @@ run_docker_containers() {
 
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     SURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
-    ICAPSURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
+    ICAPSURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/icapsuricata/docker-compose.yml"
     SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/icapsuricata/sslproxy/docker-compose.yaml"
 
     # Handle Suricata Container
