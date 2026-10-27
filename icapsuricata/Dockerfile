@@ -112,9 +112,6 @@ RUN set -eux; \
 # 5. Build icapsuricata
 # ------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------
-# 5. Build icapsuricata
-# ------------------------------------------------------------------------------
 WORKDIR /tmp
 
 RUN git clone --depth 1 \
@@ -122,8 +119,6 @@ RUN git clone --depth 1 \
 
 WORKDIR /tmp/icapsuricata
 
-# Adapt the module to the c-icap API and keep Suricata's
-# control loop running so asynchronous rule reloads are processed.
 RUN set -eux; \
     sed -i \
         -e 's/ci_icap_request_get_header(req, /ci_headers_value(req->request_header, /g' \
@@ -132,12 +127,22 @@ RUN set -eux; \
         srv_suricata.c; \
     ! grep -q 'ci_icap_request_get_header' srv_suricata.c; \
     ! grep -q '_CI_DECLARE_SERVICE(suricata_service)' srv_suricata.c; \
+    \
+    # Keep the main loop active so Suricata processes reload requests. \
     grep -Fq '// SuricataMainLoop();' srv_suricata.c; \
     sed -i \
         's|^[[:space:]]*// SuricataMainLoop();|    SuricataMainLoop();|' \
         srv_suricata.c; \
     grep -Fq '    SuricataMainLoop();' srv_suricata.c; \
     ! grep -Fq '// SuricataMainLoop();' srv_suricata.c; \
+    \
+    # Increase the HTTP header buffer to 64 KiB. \
+    grep -Fq '#define SURI_MAX_HTTP_HDRS (16 * 1024)  /* 16 KiB */' srv_suricata.c; \
+    sed -i \
+        '/^#define SURI_MAX_HTTP_HDRS / { s/(16 \* 1024)/(64 * 1024)/; s/16 KiB/64 KiB/; }' \
+        srv_suricata.c; \
+    grep -Fq '#define SURI_MAX_HTTP_HDRS (64 * 1024)  /* 64 KiB */' srv_suricata.c; \
+    \
     make CICAP_PREFIX=/usr/local
 
 RUN set -eux; \
@@ -172,10 +177,10 @@ RUN set -eux; \
     set_directive CommandsSocket /var/run/c-icap/c-icap.ctl; \
     set_directive ServerLog /var/log/c-icap/server.log; \
     set_directive StartServers 1; \
-    set_directive MaxServers 1; \
-    set_directive MinSpareThreads 4; \
-    set_directive MaxSpareThreads 16; \
-    set_directive ThreadsPerChild 16; \
+    set_directive MaxServers 2; \
+    set_directive MinSpareThreads 8; \
+    set_directive MaxSpareThreads 32; \
+    set_directive ThreadsPerChild 32; \
     printf '\n\
 # Suricata ICAP service\n\
 Service suricata_service srv_suricata.so\n\
