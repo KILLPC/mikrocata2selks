@@ -132,7 +132,7 @@ run_docker_containers() {
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     SURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
     ICAPSURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
-    SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/sslproxy/docker-compose.yaml"
+    SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/icapsuricata/sslproxy/docker-compose.yaml"
 
     # Handle Suricata Container
     if [[ "$install_suricata" =~ ^[Yy]$ ]]; then
@@ -360,7 +360,7 @@ uninstall() {
     systemctl restart systemd-networkd
     docker compose -f $PATH_GIT_MIKROCATA/suricata/docker-compose.yml down
     docker compose -f $PATH_GIT_MIKROCATA/icapsuricata/docker-compose.yml down
-    docker compose -f $PATH_GIT_MIKROCATA/suricata/sslproxy/docker-compose.yaml down
+    docker compose -f $PATH_GIT_MIKROCATA/icapsuricata/sslproxy/docker-compose.yaml down
     remove_cron_and_logrotate
     remove_fstab_and_mount
 
