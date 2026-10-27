@@ -131,6 +131,7 @@ run_docker_containers() {
 
     PATH_GIT_MIKROCATA=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     SURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
+    ICAPSURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
     SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/sslproxy/docker-compose.yaml"
 
     # Handle Suricata Container
@@ -148,6 +149,8 @@ run_docker_containers() {
 
             echo "Starting Suricata container..."
             docker compose -f "$SURICATA_COMPOSE" up -d
+            docker compose -f "$ICAPSURICATA_COMPOSE" up -d
+
 			
             # Update the variable assignment in alerts and alertsdetail
 			if [ -f "${PATH_GIT_MIKROCATA}/suricata/alerts" ]; then
@@ -348,14 +351,15 @@ uninstall() {
     echo "--- Removing downloaded tools ---"
     rm -rf /opt/tzsp2pcap-master
     rm -f /opt/master.zip
-    rm -rf /opt/tcpreplay-4.6.1
-    rm -f /opt/tcpreplay-4.6.1.tar.gz
+    rm -rf /opt/tcpreplay-4.6.2
+    rm -f /opt/tcpreplay-4.6.2.tar.gz
 
     # Reload systemd
     echo "--- Reloading systemd ---"
     systemctl daemon-reload
     systemctl restart systemd-networkd
     docker compose -f $PATH_GIT_MIKROCATA/suricata/docker-compose.yml down
+    docker compose -f $PATH_GIT_MIKROCATA/icapsuricata/docker-compose.yml down
     docker compose -f $PATH_GIT_MIKROCATA/suricata/sslproxy/docker-compose.yaml down
     remove_cron_and_logrotate
     remove_fstab_and_mount
