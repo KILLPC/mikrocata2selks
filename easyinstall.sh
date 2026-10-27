@@ -199,6 +199,7 @@ setup_fstab_and_mount() {
 
 remove_fstab_and_mount() {
     echo "--- Removing ramdisk from fstab ---"
+    fuser -kmv /mnt/ramdisk/
     umount /mnt/ramdisk 2>/dev/null || true
     sed -i '\|/mnt/ramdisk|d' /etc/fstab
 }
