@@ -111,6 +111,10 @@ RUN set -eux; \
 # ------------------------------------------------------------------------------
 # 5. Build icapsuricata
 # ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# 5. Build icapsuricata
+# ------------------------------------------------------------------------------
 WORKDIR /tmp
 
 RUN git clone --depth 1 \
@@ -118,7 +122,8 @@ RUN git clone --depth 1 \
 
 WORKDIR /tmp/icapsuricata
 
-# Adapt the module to the c-icap API and service loader.
+# Adapt the module to the c-icap API and keep Suricata's
+# control loop running so asynchronous rule reloads are processed.
 RUN set -eux; \
     sed -i \
         -e 's/ci_icap_request_get_header(req, /ci_headers_value(req->request_header, /g' \
@@ -127,6 +132,12 @@ RUN set -eux; \
         srv_suricata.c; \
     ! grep -q 'ci_icap_request_get_header' srv_suricata.c; \
     ! grep -q '_CI_DECLARE_SERVICE(suricata_service)' srv_suricata.c; \
+    grep -Fq '// SuricataMainLoop();' srv_suricata.c; \
+    sed -i \
+        's|^[[:space:]]*// SuricataMainLoop();|    SuricataMainLoop();|' \
+        srv_suricata.c; \
+    grep -Fq '    SuricataMainLoop();' srv_suricata.c; \
+    ! grep -Fq '// SuricataMainLoop();' srv_suricata.c; \
     make CICAP_PREFIX=/usr/local
 
 RUN set -eux; \
@@ -134,7 +145,6 @@ RUN set -eux; \
         srv_suricata.so \
         /usr/local/lib/c_icap/srv_suricata.so; \
     ldconfig
-
 
 # ------------------------------------------------------------------------------
 # 6. Configure c-icap
