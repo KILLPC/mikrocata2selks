@@ -1,0 +1,19 @@
+/var/log/suricata/*.log
+/var/log/suricata/*.json
+/var/log/suricata/eve/*.json
+{
+    daily
+    maxsize 100M
+    rotate 7
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    create 0640 c-icap c-icap
+    sharedscripts
+
+    postrotate
+        /usr/local/bin/suricatasc -c reopen-log-files
+    endscript
+}
