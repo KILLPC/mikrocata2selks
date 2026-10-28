@@ -12,7 +12,7 @@ sudo curl -Lo $wd/stamus-lateral.rules https://ti.stamus-networks.io/open/stamus
 tar -xvf $wd/stamus-lateral.rules
 sudo curl -Lo $wd/rules/antiphishing.rules https://raw.githubusercontent.com/julioliraup/Antiphishing/refs/heads/main/antiphishing.rules
 sudo curl -Lo $wd/rules/etn_aggressive.rules https://security.etnetera.cz/feeds/etn_aggressive.rules
-sudo curl -Lo $wd/rules/ids.rules https://urlhaus.abuse.ch/downloads/ids
+sudo curl -Lo $wd/rules/ids.rules https://urlhaus-api.abuse.ch/v2/files/exports/<auth key>/urlhaus_ids_suricata.rules
 sudo curl -Lo $wd/rules/ptopen.rules -A "Mozilla/5.0" https://rules.ptsecurity.com/files/ptopen-all.rules
 
 # 2. Automatically comment out SIDs listed in exclusions.txt
