@@ -256,8 +256,7 @@ install_mikrocata_suricata() {
     # Update path in the mikrocata Python script(s)
     # Loop manually using standard bounds (0 to HOW_MANY_MIKROTIK - 1)
     num=0
-    max_index=$(( HOW_MANY_MIKROTIK - 1 ))
-    while [ $num -le $max_index ]; do
+    while [ $num -le $HOW_MANY_MIKROTIK ]; do
         if [ -f "/usr/local/bin/mikrocataTZSP$num.py" ]; then
             sed -i "/NDR_SURICATA_LOG_PATH=/c\NDR_SURICATA_LOG_PATH=\"$LOG_PATH\"" "/usr/local/bin/mikrocataTZSP$num.py"
         fi
