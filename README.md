@@ -37,7 +37,7 @@ For a comprehensive step-by-step installation guide with detailed explanations, 
 
 The installation process is now fully interactive!
 
-1. Set up a fresh Debian 12 installation on a dedicated machine (server or VM).
+1. Set up a fresh Debian 13 installation on a dedicated machine (server or VM).
 2. Log in as root.
 3. Install Git: `apt install git`.
 4. Clone this repository: `git clone https://github.com/angolo40/mikrocata2selks.git`.
