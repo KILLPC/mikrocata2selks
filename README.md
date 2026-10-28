@@ -40,7 +40,7 @@ The installation process is now fully interactive!
 1. Set up a fresh Debian 13 installation on a dedicated machine (server or VM).
 2. Log in as root.
 3. Install Git: `apt install git`.
-4. Clone this repository: `git clone https://github.com/angolo40/mikrocata2selks.git`.
+4. Clone this repository: `git clone https://github.com/KILLPC/mikrocata2selks`.
 5. Navigate to the repository directory: `cd mikrocata2selks`.
 6. Run the interactive installer: `./easyinstall.sh`.
 7. Follow the on-screen menu:
