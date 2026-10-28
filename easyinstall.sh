@@ -399,6 +399,8 @@ print_summary() {
     echo "1. Enable the Sniffer to stream traffic to this server's IP on the correct port."
     echo "2. Add the Firewall rules to block IPs found by Suricata."
     echo "3. Enable the API service and create a user for Mikrocata."
+	echo "4. Visit the https://urlhaus.abuse.ch/ to create an account to obtain an auth key for the URLhaus ids rules."
+	echo "Then change the <auth key> with yours at /rules-data/downloadv2.sh to download the rules"
     echo "(See README.md for the exact commands)"
     echo ""
     echo "#################################################################"
