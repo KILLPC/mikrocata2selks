@@ -154,47 +154,16 @@ RUN set -eux; \
 # ------------------------------------------------------------------------------
 # 6. Configure c-icap
 # ------------------------------------------------------------------------------
+
 RUN set -eux; \
-    CONF=/etc/c-icap/c-icap.conf; \
-    test -f "$CONF"; \
-    set_directive() { \
-        key="$1"; \
-        value="$2"; \
-        if grep -qE "^[[:space:]]*${key}[[:space:]]+" "$CONF"; then \
-            sed -i -E \
-                "s|^[[:space:]]*${key}[[:space:]]+.*|${key} ${value}|" \
-                "$CONF"; \
-        else \
-            printf '\n%s %s\n' "$key" "$value" >> "$CONF"; \
-        fi; \
-    }; \
-    set_directive Port 1344; \
-    set_directive ModulesDir /usr/local/lib/c_icap; \
-    set_directive ServicesDir /usr/local/lib/c_icap; \
-    set_directive User c-icap; \
-    set_directive Group c-icap; \
-    set_directive PidFile /var/run/c-icap/c-icap.pid; \
-    set_directive CommandsSocket /var/run/c-icap/c-icap.ctl; \
-    set_directive ServerLog /var/log/c-icap/server.log; \
-    set_directive StartServers 1; \
-    set_directive MaxServers 2; \
-    set_directive MinSpareThreads 8; \
-    set_directive MaxSpareThreads 32; \
-    set_directive ThreadsPerChild 32; \
-    printf '\n\
-# Suricata ICAP service\n\
-Service suricata_service srv_suricata.so\n\
-suricata.Preview 1024\n\
-suricata.BufSize 65535\n\
-' >> "$CONF"; \
     mkdir -p \
+        /usr/local/lib/c_icap \
         /etc/suricata \
         /etc/icapsuricata \
         /var/lib/suricata \
         /var/log/suricata \
         /var/log/c-icap \
         /var/run/c-icap
-
 
 # ------------------------------------------------------------------------------
 # 7. Automatically determine the runtime Debian packages
