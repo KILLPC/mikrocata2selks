@@ -37,10 +37,10 @@ For a comprehensive step-by-step installation guide with detailed explanations, 
 
 The installation process is now fully interactive!
 
-1. Set up a fresh Debian 12 installation on a dedicated machine (server or VM).
+1. Set up a fresh Debian 13 installation on a dedicated machine (server or VM).
 2. Log in as root.
 3. Install Git: `apt install git`.
-4. Clone this repository: `git clone https://github.com/angolo40/mikrocata2selks.git`.
+4. Clone this repository: `git clone https://github.com/KILLPC/mikrocata2selks`.
 5. Navigate to the repository directory: `cd mikrocata2selks`.
 6. Run the interactive installer: `./easyinstall.sh`.
 7. Follow the on-screen menu:
@@ -74,10 +74,7 @@ The installation process is now fully interactive!
    - For non-SSL connection (default settings):
     ```sh
     /ip/service/set api address=[DEBIANIP]
-    ```
-
-4. If you want to use it with SSLProxy make sure to setup the NAT for ports 8443,8444 and configure hairpin NAT in case the sslproxy is not            inline.
-   
+    ```   
    Then configure the corresponding settings in mikrocata.py:
    ```python
    USE_SSL = True  # Set to False for non-SSL connection
@@ -88,6 +85,7 @@ The installation process is now fully interactive!
     ```sh
     /user/add name=mikrocata2selks password=xxxxxxxxxxxxx group=full (change password)
     ```
+5. If you want to use it with SSLProxy make sure to setup the NAT for ports 8443,8444 and configure hairpin NAT in case the sslproxy is not in-between.
 
 ## ⚙️ Mikrocata Configuration
 
@@ -249,8 +247,7 @@ Contributions, issues, and feature requests are welcome! Check the [issues page]
 
 Give a ⭐️ if this project helped you!
 
-- **XMR**: `87LLkcvwm7JUZAVjusKsnwNRPfhegxe73X7X3mWXDPMnTBCb6JDFnspbN8qdKZA6StHXqnJxMp3VgRK7DcS2sgnW3wH7Xhw`
-
 Credits for the extra functions.
 - https://github.com/jasonish/docker-suricata
 - https://github.com/sonertari/SSLproxy
+- https://github.com/sonertari/icapsuricata
