@@ -11,6 +11,9 @@ services:
     working_dir: /var/log/suricata
 
     volumes:
+      # c-icap configuration
+      - ./c-icap.conf:/etc/c-icap/c-icap.conf:ro
+
       # Persistent Suricata data
       - ./rules-data:/var/lib/suricata
 
