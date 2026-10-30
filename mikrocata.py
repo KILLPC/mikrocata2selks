@@ -274,7 +274,8 @@ def add_to_tik(alerts):
 
     # Remove duplicate src/dest pairs. Keying on src_ip alone drops alerts when one
     # internal host talks to many remote addresses in the same batch.
-    unique_alerts = {(item['src_ip'], item['dest_ip']): item for item in alerts}.values()
+    #unique_alerts = {(item['src_ip'], item['dest_ip']): item for item in alerts}.values()
+    unique_alerts = alerts
     debug_log(f"Processing {len(unique_alerts)} unique address pairs from alerts")
 
     for event in unique_alerts:
