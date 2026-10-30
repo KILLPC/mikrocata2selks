@@ -28,6 +28,15 @@ if [ -f "$ex_file" ]; then
     echo "Exclusions applied successfully."
 fi
 
+python3 /opt/mikrocata2selks/icapsuricata/rules-data/convert_severity_to_drop.py \
+--rules-dir="/opt/mikrocata2selks/icapsuricata/rules-data/rules/" \
+--classification="/opt/mikrocata2selks/icapsuricata/suricata-config/classification.config" \
+--apply --severity 1 \
+--protocol http \
+--output-file="/opt/mikrocata2selks/icapsuricata/rules-data/rules/filtered.rules" \
+--force
+
+
 # 3. Reload rules and rotate logs
 docker exec icapsuricata logrotate -vf /etc/logrotate.d/suricata
 docker exec icapsuricata suricatasc -c ruleset-reload-nonblocking
