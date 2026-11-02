@@ -13,7 +13,6 @@ services:
     volumes:
       - ./sslproxy.conf:/etc/sslproxy/sslproxy.conf
       - ./cert_cache:/etc/sslproxy
-      - ./gencerts:/var/log/sslproxy/cert_cache
     dns:
       - 192.168.88.1
       - 2a10:ccc3:cc30::1
