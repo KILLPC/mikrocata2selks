@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap-dev \
     libsqlite3-dev \
     libnet1-dev \
+    libnghttp2-dev \
+    libngtcp2-dev \
+    libnghttp3-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
 
@@ -44,6 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcap0.8t64 \
     libsqlite3-0 \
     libnet1 \
+    libnghttp2-14 \
     iptables \
     iproute2 \
     python3 \
