@@ -1,5 +1,5 @@
 # ==============================================================================
-# STAGE 1: Build Environment (ICAP Branch)
+# STAGE 1: Build Environment
 # ==============================================================================
 FROM debian:trixie-slim AS builder
 
@@ -19,8 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the ICAP branch, apply buffer patches, compile, and strip
-RUN GIT_SSL_NO_VERIFY=true git clone -b icap https://github.com/sonertari/SSLproxy.git /opt/sslproxy \
+# Clone SSLproxy, patch limits in protossl.c, compile, and strip binary
+RUN GIT_SSL_NO_VERIFY=true git clone https://github.com/sonertari/SSLproxy.git /opt/sslproxy \
     && cd /opt/sslproxy \
     && sed -i 's/#define MAX_CN_LEN 4096/#define MAX_CN_LEN 65536/g' src/protossl.c \
     && sed -i 's/#define MAX_CN_TOKENS 100/#define MAX_CN_TOKENS 2048/g' src/protossl.c \
@@ -34,7 +34,7 @@ FROM debian:trixie-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install libevent, nghttp2, networking runtime libraries, and python
+# Install all libevent runtime modules, core libraries, and python
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
