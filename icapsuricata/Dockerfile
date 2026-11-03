@@ -38,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 
 # ------------------------------------------------------------------------------
-# 2. Build Suricata 8.0.7 as a shared library
+# 2. Build Suricata as a shared library
 # ------------------------------------------------------------------------------
 WORKDIR /tmp
 
