@@ -42,7 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ------------------------------------------------------------------------------
 WORKDIR /tmp
 
-RUN git clone --depth 1 --branch suricata-8.0.7 \
+RUN git clone --depth 1 --branch suricata-8.0.8 \
     https://github.com/OISF/suricata.git
 
 WORKDIR /tmp/suricata
