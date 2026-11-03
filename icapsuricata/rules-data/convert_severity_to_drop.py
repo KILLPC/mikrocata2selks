@@ -556,7 +556,6 @@ def identify_protocols(
 
 
 def convert_alert_to_drop(raw_rule: str) -> str:
-    """Change only the leading alert action to drop, preserving the rule text.""                                                                                                                        "
 
     return re.sub(
         r"^(\s*)alert(?=\s+)",
