@@ -24,3 +24,9 @@ services:
       - ./suricata-config/:/etc/suricata/
 
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /usr/local/var/run/suricata/suricata-command.socket || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
