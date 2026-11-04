@@ -114,8 +114,8 @@ RUN set -eux; \
 
 WORKDIR /tmp
 
-RUN git clone --depth 1 \
-    https://github.com/sonertari/icapsuricata.git
+RUN git clone --depth 1 --single-branch --branch beta \
+    https://github.com/KILLPC/icapsuricata.git
 
 WORKDIR /tmp/icapsuricata
 
