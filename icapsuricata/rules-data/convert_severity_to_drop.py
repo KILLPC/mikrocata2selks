@@ -102,7 +102,7 @@ APP_LAYER_RE = re.compile(
     re.IGNORECASE,
 )
 
-NOALERT_RE = re.compile(r"(?:^|;)\s*noalert\s*(?:;|$)", re.IGNORECASE)
+NOALERT_RE = re.compile(r"(?:^|;)\s*(?:flowbits\s*:\s*)?noalert\s*(?:;|$)", re.IGNORECASE)
 
 # Capture flowbits operations and their first bit-name argument.
 FLOWBITS_RE = re.compile(
