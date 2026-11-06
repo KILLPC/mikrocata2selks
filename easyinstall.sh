@@ -126,6 +126,7 @@ run_docker_containers() {
     local install_suricata=$1
     local install_sslproxy=$2
     local use_ramdisk=$3
+	local install_dnsproxy=$4
 
     echo "--- Managing Docker containers ---"
 
@@ -133,6 +134,8 @@ run_docker_containers() {
     SURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/suricata/docker-compose.yml"
     ICAPSURICATA_COMPOSE="${PATH_GIT_MIKROCATA}/icapsuricata/docker-compose.yml"
     SSLPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/icapsuricata/sslproxy/docker-compose.yaml"
+	DNSPROXY_COMPOSE="${PATH_GIT_MIKROCATA}/dnsmasq/docker-compose.yml"
+
 
     # Handle Suricata Container
     if [[ "$install_suricata" =~ ^[Yy]$ ]]; then
@@ -177,6 +180,18 @@ run_docker_containers() {
         fi
     else
         echo "Skipping SSLProxy container installation."
+    fi
+	   
+    #Handle DNSPROXY Container
+    if [[ "$install_dnsproxy" =~ ^[Yy]$ ]]; then
+        if [ -f "$DNSPROXY_COMPOSE" ]; then
+            echo "Starting DNSPROXY container..."
+            docker compose -f "$DNSPROXY_COMPOSE" up -d
+        else
+            echo "Warning: DNSProxy docker-compose file not found at $DNSPROXY_COMPOSE."
+        fi
+    else
+        echo "Skipping DNSProxy container installation."
     fi
 }
 
@@ -238,9 +253,11 @@ install_mikrocata_suricata() {
     # Prompt user for container options
     read -p "Do you want to install and start the Docker Suricata container? [y/N]: " -n 1 -r REPLY_SURICATA
     echo
-        read -p "Do you want to save the suricata eve.json to ramdisk (saves sd/ssd write cycles and has faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
-        echo
+    read -p "Do you want to save the suricata eve.json to ramdisk (saves sd/ssd write cycles and has faster response) [y/N]: " -n 1 -r REPLY_RAMDISK
+    echo
     read -p "Do you want to install and start the SSLProxy container? [y/N]: " -n 1 -r REPLY_SSLPROXY
+    echo
+    read -p "Do you want to install and start the DNSProxy container? Usefull for blocking ECH queries [y/N]: " -n 1 -r REPLY_DNSPROXY
     echo
 
     HOW_MANY_MIKROTIK=1
@@ -269,7 +286,7 @@ install_mikrocata_suricata() {
     done
 
     # Pass user choices to container runner
-    run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY" "$REPLY_RAMDISK"
+    run_docker_containers "$REPLY_SURICATA" "$REPLY_SSLPROXY" "$REPLY_RAMDISK" "$REPLY_DNSPROXY"
 
     setup_cron_and_logrotate
     print_summary
@@ -362,6 +379,7 @@ uninstall() {
     docker compose -f $PATH_GIT_MIKROCATA/suricata/docker-compose.yml down
     docker compose -f $PATH_GIT_MIKROCATA/icapsuricata/docker-compose.yml down
     docker compose -f $PATH_GIT_MIKROCATA/icapsuricata/sslproxy/docker-compose.yaml down
+	docker compose -f $PATH_GIT_MIKROCATA/dnsmasq/docker-compose.yml down
     remove_cron_and_logrotate
     remove_fstab_and_mount
 
@@ -406,6 +424,8 @@ print_summary() {
     echo "3. Enable the API service and create a user for Mikrocata."
     echo "4. Visit the https://urlhaus.abuse.ch/ to create an account to obtain an auth key for the URLhaus ids rules."
 	echo "Then change the <auth key> with yours at /rules-data/downloadv2.sh to download the rules"
+	echo "5. If you installed DNSproxy, configure the /dnsmasq/dnsmasq.conf for ipv6 as well and make nat rule 53 to 3153 to the container host."
+	echo "DNS proxy is usefull for ECH blocking. It is usefull for avoiding issues with SSL proxy"
     echo "(See README.md for the exact commands)"
     echo ""
     echo "#################################################################"
