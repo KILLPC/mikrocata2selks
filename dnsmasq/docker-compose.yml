@@ -1,0 +1,16 @@
+services:
+  dnsmasq:
+    image: dockurr/dnsmasq:latest
+    container_name: mikrocatadns
+    restart: always
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w 2 127.0.0.1 3153 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
