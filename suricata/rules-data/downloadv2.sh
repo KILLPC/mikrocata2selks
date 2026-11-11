@@ -31,3 +31,5 @@ fi
 # 3. Reload rules and rotate logs
 docker exec suricata logrotate -vf /etc/logrotate.d/suricata
 docker exec suricata suricatasc -c ruleset-reload-nonblocking
+docker exec icapsuricata logrotate -vf /etc/logrotate.d/suricata
+docker exec icapsuricata suricatasc -c ruleset-reload-nonblocking
