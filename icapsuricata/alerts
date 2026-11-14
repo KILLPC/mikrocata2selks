@@ -6,7 +6,7 @@ NC='\033[0m' # No Color
 
 wd="/opt/mikrocata2selks"
 
-LOCAL_LOG_DIR="${wd}/suricata/suricata-logs"
+LOCAL_LOG_DIR="${wd}/icapsuricata/suricata-logs"
 RAMDISK_LOG_DIR="/mnt/ramdisk"
 
 # Detect log location: Check RAM disk first, fall back to local folder
