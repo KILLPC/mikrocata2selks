@@ -7,8 +7,6 @@
     rotate 7
     missingok
     notifempty
-    compress
-    delaycompress
     dateext
     create 0640 c-icap c-icap
     sharedscripts
