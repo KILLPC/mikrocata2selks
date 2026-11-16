@@ -35,7 +35,6 @@ python3 $wdicap/convert_severity_to_drop.py \
 --rules-dir="$wd/rules/" \
 --classification="/opt/mikrocata2selks/icapsuricata/suricata-config/classification.config" \
 --apply --severity 1 \
---protocol http \
 --output-file="$wdicap/rules/filtered.rules" \
 --force
 
