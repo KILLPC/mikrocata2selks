@@ -33,7 +33,7 @@ tar -xvf $wd/stamus-lateral.rules
 sudo curl -Lo $wd/rules/antiphishing.rules https://raw.githubusercontent.com/julioliraup/Antiphishing/refs/heads/main/antiphishing.rules
 sudo curl -Lo $wd/rules/etn_aggressive.rules https://security.etnetera.cz/feeds/etn_aggressive.rules
 sudo curl -Lo $wd/rules/ids.rules https://urlhaus-api.abuse.ch/v2/files/exports/<auth key>/urlhaus_ids_suricata.rules
-sudo curl -Lo $wd/rules/ptopen.rules -A "Mozilla/5.0" https://rules.ptsecurity.com/files/ptopen-all.rules
+sudo curl -Lo $wd/rules/ptopen.rules -A "Mozilla/5.0" https://ptrules.com/files/ptopen-all.rules
 
 # BEGIN PER-SOURCE DOWNLOAD/APPLY SPLIT
 # 2. Apply the downloaded rulesets (unless explicitly requested download-only)
