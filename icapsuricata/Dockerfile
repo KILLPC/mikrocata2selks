@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpcre2-dev \
     libhyperscan-dev \
     pkg-config \
+    python3 \
     make \
     cargo \
     rustc \
@@ -44,6 +45,15 @@ WORKDIR /tmp
 
 RUN git clone --depth 1 --branch suricata-8.0.8 \
     https://github.com/OISF/suricata.git
+
+# DamiNet: clone ICAP source before compiling Suricata so the coordinated
+# reload synchronization patch is applied to both trees before libsuricata
+# and its installed headers are built.
+RUN git clone --depth 1 --single-branch --branch beta \
+    https://github.com/KILLPC/icapsuricata.git
+
+COPY patches/patch_lib_reload_sync.py /tmp/patch_lib_reload_sync.py
+RUN python3 /tmp/patch_lib_reload_sync.py /tmp/suricata /tmp/icapsuricata
 
 WORKDIR /tmp/suricata
 
@@ -112,12 +122,8 @@ RUN set -eux; \
 # 5. Build icapsuricata
 # ------------------------------------------------------------------------------
 
-WORKDIR /tmp
-
-RUN git clone --depth 1 --single-branch --branch beta \
-    https://github.com/KILLPC/icapsuricata.git
-
 WORKDIR /tmp/icapsuricata
+
 
 RUN set -eux; \
     sed -i \
